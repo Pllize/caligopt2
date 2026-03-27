@@ -625,9 +625,6 @@ function renderDash(){
   const bySt={none:0,waiting:0,ordered:0,shipwait:0,shipping:0,delivered:0};
   S.stores.forEach(s=>{if(!storeWithPurch.has(s.id))bySt.none++;});
 
-  // Fixed release dates
-  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
-  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{const k=p.status||'waiting';bySt[k]=(bySt[k]||0)+1;});
   const totalPurchasable=S.stores.length;
   const doneCount=bySt.delivered;
@@ -638,18 +635,12 @@ function renderDash(){
   // Per-store spend
   const byStor={};
 
-  // Fixed release dates
-  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
-  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{byStor[p.storeId]=(byStor[p.storeId]||0)+calcTotal(p);});
 
   // Album counts
   const byAlb={};ALBUMS.forEach(a=>byAlb[a.k]=0);
 
-  // Fixed release dates
-  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
-  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
-  S.purchases.forEach(p=>{(p.items||[]).forEach(it=>{byAlb[it.k||it.type]=(byAlb[it.k||it.type]||0)+(it.qty||0);});});
+  S.purchases.forEach(p=>{(p.items||[]).forEach(it=>{byAlb[it.type]=(byAlb[it.type]||0)+(it.qty||0);});});
 
   // Deadlines (with purchase status)
   const deadlines=S.stores.filter(s=>s.purchaseEnd)
@@ -1080,15 +1071,15 @@ function renderCal(){
     }
   });
 
-  // Fixed release dates
-  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
-  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{
     if(p.purchaseDate){
       const store=S.stores.find(s=>s.id===p.storeId);
       addEv(p.purchaseDate.slice(0,10),{type:'pur',store,purchaseId:p.id,label:store?.name||'?'});
     }
   });
+  // Fixed release dates (always shown)
+  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
+  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
 
   // Build cells
   let cells='';
