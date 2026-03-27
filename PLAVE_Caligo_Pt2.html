@@ -1649,8 +1649,7 @@ function _showPlatRow(store){
 
 function _updPForm(){
   const p=window._ep;if(!p)return;
-  const sid=document.getElementById('pf-s')?.value;if(!sid)return;
-  p.storeId=sid;
+  const sid=p.storeId;if(!sid)return;
   const store=S.stores.find(s=>s.id===sid);if(!store)return;
   const ovs=isOvs(store);const cur=getStoreCur(store);const r=rate(cur);
   const el=document.getElementById('pf-dyn');if(!el)return;
@@ -1750,9 +1749,8 @@ function _updOC(){
 }
 function _saveP(){
   const p=window._ep;if(!p)return;
-  const sid=document.getElementById('pf-s')?.value;
-  if(!sid){toast('판매처 선택 필요','warn');return;}
-  p.storeId=sid;
+  const sid=p.storeId;
+  if(!sid){toast('판매처를 선택해주세요','warn');return;}
   p.status=document.getElementById('pf-st')?.value||'waiting';
   p.owner=document.getElementById('pf-own')?.value||'';
   p.buyer=document.getElementById('pf-buy')?.value||'';
