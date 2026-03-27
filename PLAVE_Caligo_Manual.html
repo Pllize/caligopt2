@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>사용설명서 — PLAVE Caligo Pt.2 구매 관리기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #09101f;
+  --sur: #111827;
+  --sur2: #1a2235;
+  --bd: #1e2d4a;
+  --bd2: #2d4070;
+  --tx: #dce8ff;
+  --tx2: #7a98cc;
+  --tx3: #3f5480;
+  --ac: #4c7bff;
+  --ac2: #7c5cff;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --pk: #a855f7;
+  --info: #06b6d4;
+  --mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--tx);
+  line-height: 1.7;
+  font-size: 15px;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: .4;
+}
+
+/* ── HEADER ── */
+.site-header {
+  position: sticky;
+  top: 0;
+  background: rgba(9,16,31,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--bd);
+  z-index: 100;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.site-logo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx2);
+  letter-spacing: .5px;
+}
+.site-logo span { color: var(--ac); }
+.site-nav {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: none;
+}
+.site-nav::-webkit-scrollbar { display: none; }
+.nav-link {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tx2);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.nav-link:hover { background: var(--sur2); color: var(--tx); }
+.nav-link.active { background: var(--ac); color: #fff; }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  padding: 80px 24px 60px;
+  text-align: center;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(ellipse, rgba(76,123,255,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border: 1px solid var(--ac);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ac);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: clamp(26px, 5vw, 42px);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--ac), var(--pk));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p {
+  font-size: 15px;
+  color: var(--tx2);
+  max-width: 480px;
+  margin: 0 auto 32px;
+}
+.hero-meta {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--tx3);
+}
+.hero-meta span { display: flex; align-items: center; gap: 5px; }
+
+/* ── LAYOUT ── */
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── TOC ── */
+.toc-card {
+  background: var(--sur);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 48px;
+}
+.toc-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tx3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.toc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--sur2);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--tx2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .15s;
+  border: 1px solid transparent;
+}
+.toc-item:hover { border-color: var(--ac); color: var(--tx); }
+.toc-item-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ac);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── SECTIONS ── */
+.section {
+  margin-bottom: 56px;
+  scroll-margin-top: 72px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--bd);
+}
+.section-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.icon-blue  { background: rgba(76,123,255,.15); }
+.icon-green { background: rgba(34,197,94,.12); }
+.icon-pk    { background: rgba(168,85,247,.12); }
+.icon-warn  { background: rgba(245,158,11,.12); }
+.icon-info  { background: rgba(6,182,212,.12); }
+.icon-err   { background: rgba(239,68,68,.12); }
+.section-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+}
+.section-sub {
+  font-size: 13px;
+  color: var(--tx2);
+  margin-top: 2px;
+}
+
+/* ── PROSE ── */
+p { color: var(--tx2); margin-bottom: 14px; font-size: 14px; }
+p strong { color: var(--tx); font-weight: 600; }
+
+/* ── STEP BLOCKS ── */
+.steps { display: flex; flex-direction: column; gap: 12px; }
+.step {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--sur);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  transition: border-color .15s;
+}
+.step:hover { border-color: var(--bd2); }
+.step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--ac), var(--ac2));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.step-content { flex: 1; }
+.step-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.step-desc { font-size: 13px; color: var(--tx2); line-height: 1.6; }
+.step-desc strong { color: var(--tx); }
+
+/* ── CARDS GRID ── */
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.info-card {
+  background: var(--sur);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 16px;
+}
+.info-card-icon { font-size: 22px; margin-bottom: 8px; }
+.info-card-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.info-card-desc { font-size: 12px; color: var(--tx2); line-height: 1.6; }
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  line-height: 1.6;
+}
+.callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.callout-body { flex: 1; }
+.callout-body strong { display: block; margin-bottom: 3px; font-weight: 700; }
+.callout.tip    { background: rgba(76,123,255,.08);  border: 1px solid rgba(76,123,255,.25);  color: var(--tx2); }
+.callout.warn   { background: rgba(245,158,11,.08);  border: 1px solid rgba(245,158,11,.25);  color: #c89a40; }
+.callout.danger { background: rgba(239,68,68,.08);   border: 1px solid rgba(239,68,68,.25);   color: #c06060; }
+.callout.success{ background: rgba(34,197,94,.08);   border: 1px solid rgba(34,197,94,.25);   color: #4aad70; }
+.callout.secret { background: rgba(168,85,247,.08);  border: 1px solid rgba(168,85,247,.25);  color: var(--pk); }
+
+/* ── BADGE DEMOS ── */
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.bx { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 16px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.bx-none  { background: rgba(90,110,150,.2); color: #7a98cc; border: 1px solid #253550; }
+.bx-wait  { background: rgba(245,158,11,.12); color: var(--warn); border: 1px solid var(--warn); }
+.bx-ord   { background: rgba(76,123,255,.15); color: var(--ac);   border: 1px solid var(--ac); }
+.bx-sw    { background: rgba(6,182,212,.12);  color: var(--info); border: 1px solid var(--info); }
+.bx-sh    { background: rgba(6,182,212,.12);  color: var(--info); border: 1px solid var(--info); }
+.bx-del   { background: rgba(34,197,94,.12);  color: var(--ok);   border: 1px solid var(--ok); }
+.bx-dom   { background: rgba(76,123,255,.08); color: var(--ac);   border: 1px solid #253550; }
+.bx-ovs   { background: rgba(168,85,247,.08); color: var(--pk);   border: 1px solid #253550; }
+.bx-plt   { background: rgba(245,158,11,.1);  color: var(--warn); border: 1px solid rgba(245,158,11,.4); }
+.bx-pk    { background: rgba(168,85,247,.12); color: var(--pk);   border: 1px solid var(--pk); }
+.bx-plt2  { background: rgba(6,182,212,.1);   color: var(--info); border: 1px solid rgba(6,182,212,.4); }
+
+/* ── CODE / MONO ── */
+.code-inline {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--sur2);
+  border: 1px solid var(--bd);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: var(--info);
+}
+
+/* ── TABLE ── */
+.tbl { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+.tbl th { text-align: left; padding: 8px 12px; background: var(--sur2); font-weight: 600; color: var(--tx2); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--bd); }
+.tbl td { padding: 10px 12px; border-bottom: 1px solid var(--bd); color: var(--tx2); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--sur); }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 1px solid var(--bd); margin: 40px 0; }
+
+/* ── UI MOCKUP CHIPS ── */
+.ui-demo {
+  background: var(--sur);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.ui-demo-label { font-size: 10px; font-weight: 600; color: var(--tx3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+
+/* ── KEYBOARD SHORTCUT ── */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: var(--sur);
+  border: 1px solid var(--bd2);
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--tx);
+  box-shadow: 0 2px 0 var(--bd2);
+}
+
+/* ── FOOTER ── */
+.site-footer {
+  text-align: center;
+  padding: 40px 24px;
+  border-top: 1px solid var(--bd);
+  color: var(--tx3);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.site-footer a { color: var(--ac); text-decoration: none; }
+
+/* ── SCROLL TO TOP ── */
+#scroll-top {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--ac);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .3s;
+  z-index: 200;
+  border: none;
+}
+#scroll-top.visible { opacity: 1; }
+
+/* ── ANIMATIONS ── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .5s ease, transform .5s ease;
+}
+.fade-in.visible { opacity: 1; transform: none; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .site-header { padding: 0 16px; height: 50px; }
+  .hero { padding: 60px 16px 40px; }
+  .container { padding: 0 16px 60px; }
+  .toc-grid { grid-template-columns: 1fr 1fr; }
+  .cards { grid-template-columns: 1fr; }
+  .section-title { font-size: 18px; }
+  .tbl { font-size: 12px; }
+  .tbl th, .tbl td { padding: 7px 9px; }
+}
+@media(max-width:380px){
+  .toc-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="site-logo">PLAVE <span>·</span> Caligo Pt.2 <span>사용설명서</span></div>
+  <nav class="site-nav">
+    <a href="#overview" class="nav-link">소개</a>
+    <a href="#dashboard" class="nav-link">대시보드</a>
+    <a href="#purchase" class="nav-link">구매기록</a>
+    <a href="#calendar" class="nav-link">캘린더</a>
+    <a href="#manage" class="nav-link">관리</a>
+    <a href="#data" class="nav-link">데이터</a>
+    <a href="#tips" class="nav-link">팁</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">User Guide · v1.0</div>
+  <h1>PLAVE Caligo Pt.2<br><span class="highlight">구매 관리기록</span> 사용설명서</h1>
+  <p>초동 200만장 LASSGO — 메뉴얼도 만들기 귀찮아서 만들어달라했어요</p>
+  <div class="hero-meta">
+    <span>🎵 수십개 판매처</span>
+    <span>💱 5개국 환율 자동</span>
+    <span>📱 모바일 최적화</span>
+    <span>☁️ 브라우저 자동 저장</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+
+  <!-- TOC -->
+  <div class="toc-card fade-in">
+    <div class="toc-title">목차</div>
+    <div class="toc-grid">
+      <a href="#overview"   class="toc-item"><span class="toc-item-num">1</span>앱 소개 & 기본 구조</a>
+      <a href="#dashboard"  class="toc-item"><span class="toc-item-num">2</span>대시보드</a>
+      <a href="#purchase"   class="toc-item"><span class="toc-item-num">3</span>구매기록 추가/관리</a>
+      <a href="#calendar"   class="toc-item"><span class="toc-item-num">4</span>캘린더</a>
+      <a href="#manage"     class="toc-item"><span class="toc-item-num">5</span>판매처 & 플랫폼 관리</a>
+      <a href="#rates"      class="toc-item"><span class="toc-item-num">6</span>환율 & 단가</a>
+      <a href="#data"       class="toc-item"><span class="toc-item-num">7</span>데이터 백업 & 복원</a>
+      <a href="#tips"       class="toc-item"><span class="toc-item-num">8</span>팁 & 자주 묻는 질문</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ 1. OVERVIEW -->
+  <section class="section fade-in" id="overview">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🎯</div>
+      <div>
+        <div class="section-title">앱 소개 & 기본 구조</div>
+        <div class="section-sub">이 앱이 뭘 해주는지 한눈에</div>
+      </div>
+    </div>
+
+    <p>이 앱은 PLAVE의 4th 미니앨범 <strong>Caligo Pt.2</strong> 구매를 체계적으로 관리하기 위해 만들어진 개인용 트래커입니다. 국내/해외 판매처별 단가, 환율 변환, 배송 상태, 오프라인 이벤트 일정을 한 화면에서 확인할 수 있어요.</p>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>별도 설치 없이 브라우저에서 바로 사용!</strong>
+        HTML 파일을 열기만 하면 됩니다. 데이터는 각자의 브라우저 저장소(localStorage)에 자동으로 저장됩니다.
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="info-card">
+        <div class="info-card-icon">📊</div>
+        <div class="info-card-title">대시보드</div>
+        <div class="info-card-desc">총 지출, 배송 현황, 판매처별 금액, 마감일 한눈에 확인</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">🛒</div>
+        <div class="info-card-title">구매기록</div>
+        <div class="info-card-desc">국가 → 판매처 선택 후 앨범 수량, 가격, 배송비 기록</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon">📅</div>
+        <div class="info-card-title">캘린더</div>
+        <div class="info-card-desc">판매 마감일, 오프라인 이벤트, 구매일을 월간 달력으로</div>
+      </div>
+      </div>
+    </div>
+
+    <div class="ui-demo">
+      <div class="ui-demo-label">화면 구성</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div style="background:var(--sur2);border:1px solid var(--bd);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600">
+          🎯 초동 200만장 LASSGO ! &nbsp;·&nbsp; 상단 헤드라인
+        </div>
+        <div style="background:var(--sur2);border:1px solid var(--bd);border-radius:8px;padding:8px 16px;font-size:12px">
+          💱 환율팝업 &nbsp; 💾 데이터관리 &nbsp; 🌙 다크/라이트 &nbsp; 
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <span style="padding:8px 16px;background:rgba(76,123,255,.15);border:1px solid var(--ac);border-radius:6px;font-size:12px;font-weight:600;color:var(--ac)">📊 대시보드</span>
+        <span style="padding:8px 16px;background:var(--sur2);border:1px solid var(--bd);border-radius:6px;font-size:12px">🛒 구매기록</span>
+        <span style="padding:8px 16px;background:var(--sur2);border:1px solid var(--bd);border-radius:6px;font-size:12px">📅 캘린더</span>
+        <span style="padding:4px 12px;font-size:11px;color:var(--tx3)">(모바일: 하단 탭)</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════ 2. DASHBOARD -->
+  <section class="section fade-in" id="dashboard">
+    <div class="section-header">
+      <div class="section-icon icon-blue">📊</div>
+      <div>
+        <div class="section-title">대시보드</div>
+        <div class="section-sub">모든 현황을 한눈에 파악</div>
+      </div>
+    </div>
+
+    <p>앱을 열면 가장 먼저 보이는 화면입니다. 구매 현황 전체를 빠르게 요약해서 보여줍니다.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">①</div>
+        <div class="step-content">
+          <div class="step-title">구매비 / 배송 / 미완료 — 상단 3칸 통계</div>
+          <div class="step-desc">
+            <strong>💰 구매비(확정)</strong>: 구매대기 제외 실제 결제한 금액 합계. 구매대기 금액이 있으면 주황색으로 추가 표시.<br>
+            <strong>✅ 배송완료 / 🚚 진행</strong>: 배송이 끝난 건수 / 배송중·대기 건수.<br>
+            <strong>📋 미구매 · 대기</strong>: 아직 구매 기록이 없는 판매처 수 / 구매대기 상태 건수.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">②</div>
+        <div class="step-content">
+          <div class="step-title">구매현황 바 — 상태별 클릭으로 상세 조회</div>
+          <div class="step-desc">
+            미구매 · 구매대기 · 구매완료 · 배송대기 · 배송중 · 배송완료 뱃지를 클릭하면 해당 상태의 목록 팝업이 뜹니다.<br>
+            <div class="badge-row" style="margin-top:8px">
+              <span class="bx bx-none">미구매</span>
+              <span class="bx bx-wait">구매대기</span>
+              <span class="bx bx-ord">구매완료</span>
+              <span class="bx bx-sw">배송대기</span>
+              <span class="bx bx-sh">배송중</span>
+              <span class="bx bx-del">배송완료</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">③</div>
+        <div class="step-content">
+          <div class="step-title">판매처별 지출 — 탭해서 상세 펼치기</div>
+          <div class="step-desc">
+            판매처 카드를 탭하면 해당 판매처에서 구매한 항목 목록이 아래로 펼쳐집니다. <strong>플랫폼 배지</strong>와 <strong>국내/해외 구분</strong>이 함께 표시됩니다.
+            <div class="badge-row" style="margin-top:8px">
+              <span class="bx bx-dom">🇰🇷 국내</span>
+              <span class="bx bx-ovs">🌏 해외</span>
+              <span class="bx bx-plt">🏷 훗타운</span>
+              <span class="bx bx-plt2">🎵 음총</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">④</div>
+        <div class="step-content">
+          <div class="step-title">구매 마감일 — D-day 한눈에</div>
+          <div class="step-desc">
+            마감이 가까울수록 빨간색으로 표시됩니다. 이미 구매한 판매처는 <span class="bx bx-ord" style="font-size:10px">✓ 구매완료</span> 뱃지가 함께 표시되고, 탭하면 해당 판매처 카드로 스크롤됩니다.<br>
+            우측 상단의 <span class="code-inline">만료 숨김</span> 버튼으로 기간이 지난 항목을 숨길 수 있어요.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">⑤</div>
+        <div class="step-content">
+          <div class="step-title">앨범별 수량 — 탭으로 어디서 샀는지 조회</div>
+          <div class="step-desc">PHOTOBOOK · POCAALBUM · ID PASS · INVENTORY 각각의 총 수량이 표시됩니다. 수량을 탭하면 그 앨범을 어느 판매처에서 몇 장 구매했는지 팝업으로 확인할 수 있어요.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════ 3. PURCHASE -->
+  <section class="section fade-in" id="purchase">
+    <div class="section-header">
+      <div class="section-icon icon-green">🛒</div>
+      <div>
+        <div class="section-title">구매기록 추가 & 관리</div>
+        <div class="section-sub">국내/해외 구매를 정확하게 기록하는 법</div>
+      </div>
+    </div>
+
+    <p>상단의 <strong>+ 추가</strong> 버튼을 눌러 새 구매 기록을 입력합니다. 국가 → 판매처 순서로 선택하면 해당 판매처에 맞는 입력 폼이 자동으로 나타납니다.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">🌍 국가 선택</div>
+          <div class="step-desc">🇰🇷 한국 · 🇯🇵 일본 · 🇨🇳 중국 · 🇹🇼 대만 · 🇺🇸 미국 버튼 중 하나를 탭합니다. <strong>국내 먼저, 해외 뒤</strong>로 정렬되어 있어요.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">🏪 판매처 선택</div>
+          <div class="step-desc">선택한 국가의 판매처만 가나다순으로 버튼으로 표시됩니다. 판매처를 탭하면 <strong>🏷 플랫폼 정보</strong>가 자동으로 아래에 표시됩니다.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">💿 앨범 수량 입력</div>
+          <div class="step-desc">
+            − / + 버튼 또는 직접 숫자를 입력해 수량을 설정합니다. <strong>수량 0 = 미구매</strong>.<br>
+            <span class="bx bx-pk" style="font-size:11px;margin-right:4px">⭐ 미공포</span>표시가 된 앨범이 해당 판매처의 미공포 특전 지급 버전입니다.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-title">🌏 해외 구매 비용 입력 (해외 판매처만 표시)</div>
+          <div class="step-desc">
+            <strong>직접 결제금액(현지통화)</strong>: 비워두면 수량 × 단가로 자동 계산됩니다.<br>
+            <strong>⚡ 실제 원화</strong>: 입력하면 환율 계산을 무시하고 이 금액이 최우선 적용됩니다.<br>
+            해외내배송비 · 배송대행비 · 관세 · 국내배송비를 추가 입력하면 <strong>예상 합계가 실시간으로 계산</strong>됩니다.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-title">👤 대리구매 입력 (선택)</div>
+          <div class="step-desc">
+            <strong>사다줄 경우 → 받는 사람</strong>: 내가 누군가를 위해 구매할 때 받는 사람 이름 입력.<br>
+            <strong>대리구매 받은 경우 → 사준 사람</strong>: 다른 사람이 나 대신 구매해 준 경우.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn" style="margin-top:16px">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>같은 판매처에서 여러 번 구매했다면?</strong>
+        동일 판매처라도 구매 건을 별도로 추가하면 됩니다. 대시보드에서 판매처별 합산 금액이 자동으로 집계됩니다.
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px solid var(--bd);margin:24px 0">
+
+    <p><strong>배송 상태 업데이트</strong> — 구매 기록 카드 우측 ✏️ 버튼을 눌러 수정 화면에서 상태를 변경합니다.</p>
+    <table class="tbl">
+      <thead><tr><th>상태</th><th>의미</th></tr></thead>
+      <tbody>
+        <tr><td><span class="bx bx-wait">구매대기</span></td><td>구매는 하지 않았지만 기록만 해둔 상태 (예: 카트에 담아둠)</td></tr>
+        <tr><td><span class="bx bx-ord">구매완료</span></td><td>결제 완료, 배송 전</td></tr>
+        <tr><td><span class="bx bx-sw">배송대기</span></td><td>판매처에서 아직 발송 전</td></tr>
+        <tr><td><span class="bx bx-sh">배송중</span></td><td>운송장 발급 후 이동 중</td></tr>
+        <tr><td><span class="bx bx-del">배송완료</span></td><td>수령 완료</td></tr>
+      </tbody>
+    </table>
+
+    <hr style="border:none;border-top:1px solid var(--bd);margin:24px 0">
+
+    <p><strong>구매기록 정렬 & 필터</strong></p>
+    <div class="ui-demo">
+      <div class="ui-demo-label">정렬 옵션</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <span style="background:rgba(76,123,255,.15);color:var(--ac);padding:4px 12px;border-radius:16px;font-size:12px;border:1px solid var(--ac)">날짜 ↓</span>
+        <span style="background:var(--sur2);color:var(--tx2);padding:4px 12px;border-radius:16px;font-size:12px;border:1px solid var(--bd)">판매처</span>
+        <span style="background:var(--sur2);color:var(--tx2);padding:4px 12px;border-radius:16px;font-size:12px;border:1px solid var(--bd)">금액</span>
+        <span style="background:var(--sur2);color:var(--tx2);padding:4px 12px;border-radius:16px;font-size:12px;border:1px solid var(--bd)">상태</span>
+        <select style="background:var(--sur2);color:var(--tx2);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;font-size:12px">
+          <option>전체 판매처</option>
+        </select>
+      </div>
+    </div>
+    <p>같은 정렬 기준을 다시 탭하면 오름차순 ↑ / 내림차순 ↓ 이 전환됩니다. 드롭다운으로 특정 판매처만 필터할 수도 있어요.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════ 4. CALENDAR -->
+  <section class="section fade-in" id="calendar">
+    <div class="section-header">
+      <div class="section-icon icon-pk">📅</div>
+      <div>
+        <div class="section-title">캘린더</div>
+        <div class="section-sub">이벤트 · 마감일 · 구매일 한 화면에서</div>
+      </div>
+    </div>
+
+    <p>월간 달력 형태로 판매처 마감일, 오프라인 이벤트, 내 구매 날짜를 함께 볼 수 있습니다.</p>
+
+    <div class="cards">
+      <div class="info-card">
+        <div class="info-card-icon" style="color:var(--err)">⏰ 빨간 점</div>
+        <div class="info-card-title">구매 마감일</div>
+        <div class="info-card-desc">해당 날짜가 판매 종료일인 판매처. 클릭하면 구매 링크, 현재 구매 상태, 즉시 추가 버튼이 표시됩니다.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="color:var(--pk)">📍 보라 점</div>
+        <div class="info-card-title">오프라인 이벤트</div>
+        <div class="info-card-desc">팝업스토어 운영 기간. 클릭 시 장소 · 운영시간 · 럭키드로우 여부 등 상세 정보가 표시됩니다.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="color:var(--ac)">✓ 파란 점</div>
+        <div class="info-card-title">내 구매 날짜</div>
+        <div class="info-card-desc">구매기록에 날짜를 입력한 경우 달력에 표시됩니다. 클릭하면 해당 날의 구매 내역을 확인하고 바로 수정할 수 있어요.</div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-icon" style="color:var(--ac2)">🎵 보라 띠</div>
+        <div class="info-card-title">고정 발매일</div>
+        <div class="info-card-desc"><strong>4월 13일</strong> DIGITAL RELEASE, <strong>4월 14일</strong> ALBUM RELEASE — 항상 표시됩니다.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">🔀</span>
+      <div class="callout-body">
+        <strong>온라인 / 오프라인 토글</strong><br>
+        캘린더 상단의 <span style="background:rgba(76,123,255,.15);color:var(--ac);padding:2px 8px;border-radius:12px;font-size:12px">🛍 온라인판매</span> <span style="background:rgba(76,123,255,.15);color:var(--ac);padding:2px 8px;border-radius:12px;font-size:12px">📍 오프라인</span> 버튼으로 각각의 이벤트를 ON/OFF 할 수 있습니다.
+      </div>
+    </div>
+
+    <p>날짜 셀을 탭하면 그 날의 이벤트 목록이 달력 아래에 펼쳐집니다. 오프라인 이벤트는 <strong>장소 · 운영시간 · 주소 · 럭키드로우 여부</strong>가 표시되고, <span style="font-size:12px;background:var(--sur2);padding:2px 8px;border-radius:6px">✏️ 정보수정</span> 버튼으로 바로 편집 창을 열 수 있어요.</p>
+
+    <div class="callout success">
+      <span class="callout-icon">✅</span>
+      <div class="callout-body">
+        <strong>구매완료 확인</strong><br>
+        구매 기록이 있는 날은 셀 안에 <strong style="color:var(--ok)">구매✓</strong> 글자가 표시됩니다.
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+ 
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>[음총] 표기 판매처란?</strong><br>
+        <span class="bx bx-plt2">🎵 음총</span> 배지는 <strong>음원총판</strong>을 통해 판매되는 판매처를 의미합니다. 공식 판매처와 다른 유통 경로로, 가격이 다를 수 있어요.
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════ 6. RATES -->
+  <section class="section fade-in" id="rates">
+    <div class="section-header">
+      <div class="section-icon icon-info">💱</div>
+      <div>
+        <div class="section-title">환율 & 단가</div>
+        <div class="section-sub">해외 구매 비용 자동 환산</div>
+      </div>
+    </div>
+
+    <p>헤더의 <span class="code-inline">💱</span> 아이콘을 탭하면 현재 적용 중인 환율이 팝업으로 표시됩니다. <strong>↻ 갱신</strong> 버튼으로 실시간 환율을 가져올 수 있어요.</p>
+
+    <table class="tbl">
+      <thead><tr><th>통화</th><th>사용 판매처 예시</th><th>자동/수동</th></tr></thead>
+      <tbody>
+        <tr><td>🇯🇵 JPY (엔화)</td><td>타워레코드, HMV Japan</td><td>자동 (1시간마다 갱신)</td></tr>
+        <tr><td>🇨🇳 CNY (위안화)</td><td>TME 직구</td><td>자동</td></tr>
+        <tr><td>🇺🇸 USD (달러)</td><td>Hello82</td><td>자동</td></tr>
+        <tr><td>🇹🇼 TWD (대만달러)</td><td>Will Music 직구</td><td>자동</td></tr>
+        <tr><td>🌐 기타</td><td>직접 지정 통화</td><td>수동</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>실제 결제 원화를 직접 입력하는 경우</strong><br>
+        해외 구매 기록에서 <strong>⚡ 실제 원화</strong> 필드에 값을 입력하면 환율 계산을 무시하고 해당 금액을 기준으로 합계가 산정됩니다. 카드사 환율이나 수수료가 포함된 실제 청구 금액을 입력할 때 유용해요.
+      </div>
+    </div>
+
+    <p>환율은 앱을 열 때 1시간 이상 지났으면 자동으로 갱신을 시도합니다. 인터넷이 없는 환경이거나 API가 응답하지 않는 경우 관리 탭의 환율 설정에서 <strong>수동</strong>으로 체크하고 직접 입력할 수 있습니다.</p>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════ 7. DATA -->
+  <section class="section fade-in" id="data">
+    <div class="section-header">
+      <div class="section-icon icon-green">💾</div>
+      <div>
+        <div class="section-title">데이터 백업 & 복원</div>
+        <div class="section-sub">폰 ↔ 컴퓨터 데이터 이동 방법</div>
+      </div>
+    </div>
+
+    <p>구매 기록은 각자의 <strong>브라우저 저장소(localStorage)</strong>에 자동으로 저장됩니다. 별도 서버가 없어서 개인정보가 외부에 전송되지 않아요. 단, 브라우저 데이터를 지우면 기록도 사라지므로 정기적으로 백업을 권장합니다.</p>
+
+    <div class="callout danger">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>브라우저 초기화 전 반드시 내보내기!</strong><br>
+        브라우저 캐시/데이터 삭제, 시크릿 모드 사용, 브라우저 재설치 시 구매 기록이 삭제됩니다. 중요한 기록은 꼭 JSON 파일로 내보내 두세요.
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">⬇</div>
+        <div class="step-content">
+          <div class="step-title">내보내기 — 파일로 저장</div>
+          <div class="step-desc">
+            헤더의 <span class="code-inline">💾</span> → <strong>⬇ 내보내기</strong> 버튼을 누르면 구매 기록 전체가 <span class="code-inline">PLAVE_Caligo2_날짜.json</span> 파일로 다운로드됩니다.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">⬆</div>
+        <div class="step-content">
+          <div class="step-title">불러오기 — 파일에서 복원</div>
+          <div class="step-desc">
+            <span class="code-inline">💾</span> → <strong>⬆ 불러오기</strong>에서 JSON 파일을 선택하면 구매 기록이 복원됩니다.<br>
+            <strong>현재 기록이 덮어씌워지므로</strong> 불러오기 전에 먼저 내보내기로 백업을 해두세요.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:16px;font-weight:600;color:var(--tx)">📱 폰 ↔ 💻 컴퓨터 이동 방법</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-title">폰에서 내보내기</div>
+          <div class="step-desc">폰 브라우저에서 <span class="code-inline">💾 내보내기</span> → JSON 파일이 다운로드 폴더에 저장됩니다.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-title">파일 전송</div>
+          <div class="step-desc">카카오톡 나에게 보내기, 에어드롭, 이메일 등 편한 방법으로 파일을 컴퓨터로 전송합니다.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-title">컴퓨터에서 불러오기</div>
+          <div class="step-desc">컴퓨터 브라우저에서 앱을 열고 <span class="code-inline">💾 불러오기</span>로 JSON 파일을 선택하면 완료!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ═══════════════════════════════════ 8. TIPS -->
+  <section class="section fade-in" id="tips">
+    <div class="section-header">
+      <div class="section-icon icon-warn">✨</div>
+      <div>
+        <div class="section-title">팁 & 자주 묻는 질문</div>
+        <div class="section-sub">더 편하게 쓰는 방법</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">📌</span>
+      <div class="callout-body">
+        <strong>홈 화면에 추가하면 앱처럼 사용 가능!</strong><br>
+        모바일 브라우저에서 <strong>공유 → 홈 화면에 추가</strong>를 선택하면 앱 아이콘이 생성되어 일반 앱처럼 전체 화면으로 사용할 수 있습니다.
+      </div>
+    </div>
+
+    <table class="tbl">
+      <thead><tr><th>궁금한 점</th><th>답변</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>구매기록이 사라졌어요</td>
+          <td>브라우저 캐시가 초기화된 것입니다. 이전에 내보내기로 저장한 JSON 파일이 있다면 불러오기로 복원하세요.</td>
+        </tr>
+
+          <td>판매처를 추가하고 싶어요</td>
+          <td>업데이트 최대한 빨리 해보겠습니다.</td>
+        </tr>
+        <tr>
+          <td>같은 판매처에서 여러 종류를 샀어요</td>
+          <td>하나의 구매 기록에서 여러 앨범 수량을 함께 입력할 수 있습니다. 수량이 0인 앨범은 저장 시 제외됩니다.</td>
+        </tr>
+        <tr>
+          <td>누군가 대신 구매해줬어요</td>
+          <td>구매기록 입력 시 <strong>"대리구매 받은 경우 — 사준 사람"</strong> 필드에 이름을 입력하세요.</td>
+        </tr>
+        <tr>
+          <td>내가 누군가를 위해 사줬어요</td>
+          <td><strong>"사다줄 경우 — 받는 사람"</strong> 필드에 이름 입력. 대시보드의 "사다준 목록"에서 집계됩니다.</td>
+        </tr>
+        <tr>
+          <td>다크/라이트 모드 바꾸려면?</td>
+          <td>헤더 우측의 🌙 / ☀️ 아이콘을 탭하세요. 설정이 자동으로 저장됩니다.</td>
+        </tr>
+        <tr>
+          <td>미공포 특전이란?</td>
+          <td>판매처마다 <span class="bx bx-pk" style="font-size:10px">⭐ 미공포</span> 표시된 앨범 버전이 특전 지급 대상입니다. 구매기록 입력 시 해당 앨범에 강조 표시됩니다.</td>
+        </tr>
+
+      </tbody>
+    </table>
+
+    <div class="callout success" style="margin-top:24px">
+      <span class="callout-icon">🎵</span>
+      <div class="callout-body">
+        <strong>Caligo Pt.2 초동 200만장 LASSGO !</strong><br>
+        모든 앨범을 안전하게 구매하고, 무사히 수령하기를 바랍니다 💙
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div>PLAVE Caligo Pt.2 구매 관리기록 사용설명서</div>
+  <div>Last update: Mar 27 &nbsp;·&nbsp; by <a href="#">@plli_ze</a></div>
+</footer>
+
+<!-- SCROLL TO TOP -->
+<button id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// Scroll to top button
+window.addEventListener('scroll', () => {
+  document.getElementById('scroll-top').classList.toggle('visible', window.scrollY > 400);
+});
+
+// Active nav link
+const sections = document.querySelectorAll('.section');
+const navLinks  = document.querySelectorAll('.nav-link');
+const observer  = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+    }
+  });
+}, { rootMargin: '-30% 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// Fade in animation
+const fadeEls = document.querySelectorAll('.fade-in');
+const fadeObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.08 });
+fadeEls.forEach(el => fadeObs.observe(el));
+</script>
+</body>
+</html>
