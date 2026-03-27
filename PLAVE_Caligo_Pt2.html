@@ -248,6 +248,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 .cal-ev-strip.dl{background:rgba(239,68,68,.15);color:var(--err)}
 .cal-ev-strip.off{background:rgba(168,85,247,.15);color:var(--pk)}
 .cal-ev-strip.pur{background:rgba(79,126,255,.15);color:var(--ac)}
+.cal-ev-strip.release{background:rgba(123,95,255,.2);color:var(--ac2);font-weight:700;border:1px solid rgba(123,95,255,.3)}
 .cal-detail{background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-top:10px}
 .cal-detail-ev{padding:10px 0;border-bottom:1px solid var(--bd)}
 .cal-detail-ev:last-child{border-bottom:none}
@@ -266,6 +267,46 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 
 /* SPEND SPLIT */
 .spend-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0}
+
+
+/* HEADLINE */
+.hdr-headline{flex:1;text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;
+  background:linear-gradient(90deg,var(--ac),var(--pk),var(--ac));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;white-space:nowrap;letter-spacing:.5px;animation:shimmer 3s ease infinite;
+  background-size:200% auto}
+@keyframes shimmer{0%{background-position:0% center}50%{background-position:100% center}100%{background-position:0% center}}
+
+/* RATE POPUP */
+.rate-popup{position:fixed;top:54px;right:8px;background:var(--sur);border:1px solid var(--bd2);border-radius:var(--r);
+  padding:14px 16px;z-index:300;min-width:220px;box-shadow:var(--sh);display:none}
+.rate-popup.open{display:block;animation:fadeIn .15s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.rate-row-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.rate-row-item:last-child{border-bottom:none}
+.rate-row-item b{color:var(--ac);font-family:'Space Grotesk',monospace}
+
+/* DATA MGR MODAL */
+.data-section{background:var(--sur2);border-radius:var(--r-sm);padding:12px;margin-bottom:12px}
+.data-section-ttl{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.data-section p{font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6}
+
+/* PLATFORM badge (was dist) */
+.bx-plt{background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.4)}
+.bx-plt2{background:rgba(6,182,212,.1);color:var(--info);border:1px solid rgba(6,182,212,.4)}
+
+/* [음총] icon */
+.eumchong-icon::before{content:'🎵 ';font-style:normal}
+.store-eumchong{border-left:3px solid var(--info) !important}
+
+/* FOOTER */
+.app-footer{text-align:center;font-size:11px;color:var(--tx3);padding:10px;border-top:1px solid var(--bd);
+  margin-top:4px;background:var(--sur)}
+
+/* CAL TOGGLE */
+.cal-toggle-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+
+/* HIDE EXPIRED */
+.expired-hide-btn{font-size:11px}
 
 /* RESPONSIVE */
 @media(max-width:640px){
@@ -294,13 +335,13 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
     <div>
       <div class="hdr-logo">PLAVE · Caligo Pt.2</div>
     </div>
-    <div class="rate-row" id="rate-row"></div>
+    <div class="hdr-headline">🎯 초동 200만장 LASSGO !</div>
     <div class="hdr-btns">
-      <div class="iBtn" onclick="fetchRates()" title="환율 새로고침">↻</div>
-      <div class="iBtn" onclick="exportData()" title="내보내기">⬇</div>
-      <div class="iBtn" onclick="document.getElementById('imp').click()" title="불러오기">⬆</div>
+      <div class="iBtn" onclick="toggleRatePopup()" title="환율 보기" id="rate-icon-btn">💱</div>
+      <div class="iBtn" onclick="openDataMgr()" title="데이터 관리">💾</div>
       <input type="file" id="imp" accept=".json" style="display:none" onchange="importData(this)">
       <div class="iBtn" id="theme-btn" onclick="toggleTheme()">🌙</div>
+      <div class="iBtn" id="admin-secret-btn" onclick="secretAdminTap()" title="" style="opacity:0.2;font-size:11px">⚙</div>
     </div>
   </div>
 
@@ -308,7 +349,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
     <div class="tab on" data-tab="dash" onclick="go('dash')">📊 대시보드</div>
     <div class="tab" data-tab="purch" onclick="go('purch')">🛒 구매기록</div>
     <div class="tab" data-tab="cal" onclick="go('cal')">📅 캘린더</div>
-    <div class="tab" data-tab="mgr" onclick="go('mgr')">🏪 관리</div>
+    <!-- admin tab hidden -->
   </div>
 
   <div class="main" id="main"></div>
@@ -318,11 +359,13 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
       <div class="bot-tab on" data-tab="dash" onclick="go('dash')"><span>📊</span>대시보드</div>
       <div class="bot-tab" data-tab="purch" onclick="go('purch')"><span>🛒</span>구매</div>
       <div class="bot-tab" data-tab="cal" onclick="go('cal')"><span>📅</span>캘린더</div>
-      <div class="bot-tab" data-tab="mgr" onclick="go('mgr')"><span>🏪</span>관리</div>
+      <div class="bot-tab" id="bot-admin" style="display:none" data-tab="mgr" onclick="go('mgr')"><span>⚙</span>관리</div>
     </div>
   </div>
 </div>
+<div class="app-footer">Last update: Mar 27 &nbsp;·&nbsp; by <b>@plli_ze</b></div>
 
+<div class="rate-popup" id="rate-popup"></div>
 <div class="ov" id="ov" onclick="ovClick(event)">
   <div class="modal" id="modal">
     <div class="modal-hdr"><div class="modal-ttl" id="m-ttl"></div><div class="iBtn" onclick="closeM()">✕</div></div>
@@ -358,13 +401,13 @@ const STATUSES = [
   {k:'delivered',lb:'배송완료',cls:'bx-del'},
 ];
 const INIT_PRICES = {"KR": {"PHOTOBOOK": 20000, "POCAALBUM": 8200, "ID_PASS": 14900, "INVENTORY": 17100}, "JP": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": 2420, "INVENTORY": null}, "CN": {"PHOTOBOOK": 96, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}, "TW": {"PHOTOBOOK": null, "POCAALBUM": 210, "ID_PASS": null, "INVENTORY": null}, "US": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": 29.98, "INVENTORY": null}, "OTHER": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}};
-const DEF_RATES = {JPY:9.4537, CNY:218.3126, USD:1507.7751, TWD:47.1855, OTHER:1};
+const DEF_RATES = {JPY:9.429, CNY:217.5556, USD:1504.0284, TWD:47.0702, OTHER:1};
 
 // ═══════════════════════════════════════════
 // INITIAL STORE DATA
 // ═══════════════════════════════════════════
-const INIT_DISTRIBUTORS = [{"id": "d2", "name": "메이크스타"}, {"id": "d3", "name": "무신사"}, {"id": "d4", "name": "올리브영"}, {"id": "d5", "name": "영풍문고 / MusicArt"}, {"id": "d6", "name": "Tower Records Japan"}, {"id": "d7", "name": "HMV Japan"}, {"id": "d8", "name": "애니메이트"}, {"id": "d9", "name": "Hello82"}, {"id": "d10", "name": "TME (腾讯音乐)"}, {"id": "d11", "name": "Will Music Taiwan"}, {"id": "dcs1774543391747", "name": "VLASTSHOP"}, {"id": "dcs1774544809341", "name": "훗타운"}, {"id": "dcs1774546040116", "name": "공구플랫폼"}];
-const INIT_STORES = [{"id": "s1", "distId": "dcs1774543391747", "name": "VLAST SHOP", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "PHOTOBOOK", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-03-27T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://vlastshop.com/product/search.html?banner_action=&keyword=PLAVE+Caligo+Pt.2", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"id": "s2", "distId": "", "name": "Weverse Shop", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-13T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://shop.weverse.io/ko/shop/KRW/artists/167/categories/3719", "defDomShip": 3000, "defOvsShip": 0, "custom": false}, {"id": "s3", "distId": "d2", "name": "메이크스타", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T19:59", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "[강남] MAKESTAR SPACE GANGNAM\n⏰ 매일 12:00~20:00\n📍 서울시 학동로23길 29 B1", "url": "https://www.makestar.com/product/16439", "defDomShip": 3000, "defOvsShip": 0, "custom": false}, {"id": "s4", "distId": "d3", "name": "무신사 (1차)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-13T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://www.musinsa.com/search/goods?keyword=PLAVE+4th+Mini+Album+Caligo+Pt.2", "defDomShip": 0, "defOvsShip": 0, "custom": false}, {"id": "s5", "distId": "d3", "name": "무신사 (2차)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-04-14T11:00", "purchaseEnd": "2026-04-20T23:00", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "📍 무신사 스토어 성수 11:00~10:00 (연무장길 83 1F)\n📍 무신사 스토어 명동 11:00~10:00 (명동길 13)", "url": "https://www.musinsa.com/search/goods?keyword=PLAVE+4th+Mini+Album+Caligo+Pt.2", "defDomShip": 0, "defOvsShip": 0, "custom": false}, {"id": "s6", "distId": "d4", "name": "올리브영", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T22:00", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "📍 올리브영N 성수 (연무장7길 13) 10:00~22:00\n📍 올리브영 홍대놀이터점 (와우산로21길 29) 10:00~22:00", "url": "https://oliveyoung.co.kr", "defDomShip": 0, "defOvsShip": 0, "custom": false}, {"id": "s7", "distId": "d5", "name": "영풍문고 (뮤직아트)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T22:00", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "📍 the stage by Musicart (청계천로 41 영풍빌딩 B2)\n📍 영풍문고 여의도 IFC몰점 (국제금융로 10 L2)\n📍 영풍문고 홍대점 (양화로 161 케이스퀘어 B2)", "url": "http://musicart.kr/shop/shopdetail.html?branduid=3530779", "defDomShip": 3000, "defOvsShip": 0, "custom": false}, {"id": "s8", "distId": "d6", "name": "타워레코드 (JP)", "country": "JP", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "", "defDomShip": 0, "defOvsShip": 1210, "custom": false}, {"id": "s9", "distId": "d7", "name": "HMV (JP)", "country": "JP", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "", "defDomShip": 0, "defOvsShip": 330, "custom": false}, {"id": "s10", "distId": "d8", "name": "애니메이트 (KR)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://animate-onlineshop.co.kr/goods/goods_view.php?goodsNo=1000089045", "defDomShip": 0, "defOvsShip": 0, "custom": false}, {"id": "s11", "distId": "d9", "name": "Hello82 (예판)", "country": "US", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-17T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://hello82.com/", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"id": "s12", "distId": "d9", "name": "Hello82 (팝업)", "country": "US", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-17T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://hello82.com/", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"id": "s13", "distId": "d10", "name": "TME 공식", "country": "CN", "priceMode": "country", "customPrices": {}, "unpoPerk": "PHOTOBOOK", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://i2.y.qq.com/n3/cm/pages/putao/product_detail/index.html?productID=1205354113456059", "defDomShip": 0, "defOvsShip": 70, "custom": true}, {"id": "s14", "distId": "d11", "name": "Will Music (대만)", "country": "TW", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"name": "TME (훗타운)", "distId": "dcs1774544809341", "country": "KR", "unpoPerk": "PHOTOBOOK", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 22683.6, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}, "purchaseStart": "2026-03-25T02:09", "purchaseEnd": "2026-04-13T02:10", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "", "custom": true, "id": "cs1774545021788"}, {"name": "Will Music (훗타운)", "distId": "dcs1774544809341", "country": "KR", "unpoPerk": "POCAALBUM", "priceMode": "custom", "customPrices": {"PHOTOBOOK": null, "POCAALBUM": 52532, "ID_PASS": null, "INVENTORY": null}, "purchaseStart": "2026-03-25T02:12", "purchaseEnd": "2026-04-13T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "", "custom": true, "id": "cs1774545187345"}, {"name": "케타포 (국내)", "distId": "", "country": "KR", "unpoPerk": "", "priceMode": "country", "customPrices": {}, "purchaseStart": "2026-03-24T02:18", "purchaseEnd": "2026-04-14T17:00", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://kr.ktown4u.com/eventinfo?eve_no=44113596&biz_no=967", "custom": true, "id": "cs1774545544751"}, {"name": "비트로드", "distId": "", "country": "KR", "unpoPerk": "", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 16500, "POCAALBUM": 10100, "ID_PASS": 18400, "INVENTORY": 21100}, "purchaseStart": "2026-03-24T02:21", "purchaseEnd": "2026-04-12T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/i/status/2036292541986001367", "custom": true, "id": "cs1774545708995"}, {"name": "버프즈", "distId": "", "country": "KR", "unpoPerk": "", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 19000, "POCAALBUM": 7790, "ID_PASS": 14155, "INVENTORY": 16245}, "purchaseStart": "2026-03-24T02:23", "purchaseEnd": "2026-04-03T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036291046146265331?s=20", "custom": true, "id": "cs1774545824537"}, {"name": "디어마이뮤즈", "distId": "", "country": "KR", "unpoPerk": "", "priceMode": "country", "customPrices": {}, "purchaseStart": "2026-03-24T02:25", "purchaseEnd": "2026-04-14T19:00", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036340525821993312?s=20", "custom": true, "id": "cs1774545937612"}, {"name": "HMV (공구)", "distId": "dcs1774546040116", "country": "KR", "unpoPerk": "", "priceMode": "custom", "customPrices": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": 24210, "INVENTORY": null}, "purchaseStart": "2026-03-24T02:28", "purchaseEnd": "2026-03-29T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036341423856034026?s=20", "custom": true, "id": "cs1774546033455"}, {"name": "타워레코드 (공구)", "distId": "dcs1774546040116", "country": "KR", "unpoPerk": "ID_PASS", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 24410, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}, "purchaseStart": "", "purchaseEnd": "", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036341423856034026?s=20", "custom": true, "id": "cs1774546219159"}, {"name": "더현대서울", "distId": "", "country": "KR", "unpoPerk": "POCAALBUM", "priceMode": "country", "customPrices": {}, "purchaseStart": "", "purchaseEnd": "", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-19", "offlineNote": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80e1-b7b5-d07592ac0481\n모든 버전 구매시 미공포", "defDomShip": 0, "defOvsShip": 0, "url": "", "custom": true, "id": "cs1774546314667"}, {"name": "길보드", "distId": "", "country": "KR", "unpoPerk": "POCAALBUM", "priceMode": "country", "customPrices": {}, "purchaseStart": "2026-04-20T15:00", "purchaseEnd": "2026-04-20T23:00", "purchaseEndTxt": "", "offlineStart": "2026-04-20", "offlineEnd": "2026-04-20", "offlineNote": "모든 버전 구매시 미공포", "defDomShip": 0, "defOvsShip": 0, "url": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80d4-91e3-e505275bb65c", "custom": true, "id": "cs1774546479074"}];
+const INIT_DISTRIBUTORS = [{"id": "d2", "name": "메이크스타"}, {"id": "d3", "name": "무신사"}, {"id": "d4", "name": "올리브영"}, {"id": "d5", "name": "영풍문고 / MusicArt"}, {"id": "d6", "name": "Tower Records Japan"}, {"id": "d7", "name": "HMV Japan"}, {"id": "d8", "name": "애니메이트"}, {"id": "d9", "name": "Hello82"}, {"id": "d10", "name": "TME (腾讯音乐)"}, {"id": "d11", "name": "Will Music Taiwan"}, {"id": "dcs1774543391747", "name": "VLASTSHOP"}, {"id": "dcs1774544809341", "name": "훗타운"}, {"id": "dcs1774546040116", "name": "공구플랫폼"}, {"id": "dcs1774619302089", "name": "버프즈"}, {"id": "dcs1774619306510", "name": "디어마이뮤즈"}, {"id": "dcs1774619310313", "name": "비트로드"}, {"id": "dcs1774619329527", "name": "케타포"}, {"id": "dcs1774619738077", "name": "WEVERSE"}];
+const INIT_STORES = [{"id": "s1", "distId": "dcs1774543391747", "name": "VLAST SHOP", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "PHOTOBOOK", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-03-27T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://vlastshop.com/product/search.html?banner_action=&keyword=PLAVE+Caligo+Pt.2", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"id": "s2", "distId": "dcs1774619738077", "name": "Weverse Shop", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-13T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://shop.weverse.io/ko/shop/KRW/artists/167/categories/3719", "defDomShip": 3000, "defOvsShip": 0, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s3", "distId": "d2", "name": "메이크스타", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T19:59", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "[강남] MAKESTAR SPACE GANGNAM", "url": "https://www.makestar.com/product/16439", "defDomShip": 3000, "defOvsShip": 0, "custom": true, "offlineHours": "매일 12:00~20:00", "offlineAddress": "서울시 학동로23길 29 B1", "offlineLuckyDraw": false}, {"id": "s4", "distId": "d3", "name": "무신사 (1차, 레드)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-13T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://www.musinsa.com/search/goods?keyword=PLAVE+4th+Mini+Album+Caligo+Pt.2", "defDomShip": 0, "defOvsShip": 0, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s5", "distId": "d3", "name": "무신사 (2차)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-04-14T11:00", "purchaseEnd": "2026-04-20T23:00", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "무신사 온라인: 블랙\n무신사 스토어 성수 (연무장길 83 1F) - 레드\n무신사 스토어 명동 (명동길 13) - 블랙", "url": "https://www.musinsa.com/search/goods?keyword=PLAVE+4th+Mini+Album+Caligo+Pt.2&gf=A&keywordType=keyword", "defDomShip": 0, "defOvsShip": 0, "custom": true, "offlineHours": "11:00~10:00 ", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s6", "distId": "d4", "name": "올리브영", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T22:00", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "📍 올리브영N 성수 (연무장7길 13) 10:00~22:00\n📍 올리브영 홍대놀이터점 (와우산로21길 29) 10:00~22:00", "url": "https://www.oliveyoung.co.kr/store/planshop/getPlanShopDetail.do?dispCatNo=500000100018171", "defDomShip": 0, "defOvsShip": 0, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s7", "distId": "d5", "name": "영풍문고 (뮤직아트)", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T22:00", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-20", "offlineNote": "📍 the stage by Musicart (청계천로 41 영풍빌딩 B2)\n📍 영풍문고 여의도 IFC몰점 (국제금융로 10 L2)\n📍 영풍문고 홍대점 (양화로 161 케이스퀘어 B2)", "url": "http://musicart.kr/shop/shopdetail.html?branduid=3530779", "defDomShip": 3000, "defOvsShip": 0, "custom": true, "offlineHours": "10:00 - 22:00", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s8", "distId": "d6", "name": "타워레코드", "country": "JP", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "", "defDomShip": 0, "defOvsShip": 1210, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s9", "distId": "d7", "name": "HMV", "country": "JP", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "", "defDomShip": 0, "defOvsShip": 330, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s10", "distId": "d8", "name": "애니메이트", "country": "KR", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://animate-onlineshop.co.kr/goods/goods_view.php?goodsNo=1000089045", "defDomShip": 0, "defOvsShip": 0, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s11", "distId": "d9", "name": "Hello82 (예판)", "country": "US", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-17T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://hello82.com/", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"id": "s12", "distId": "d9", "name": "Hello82 (팝업)", "country": "US", "priceMode": "country", "customPrices": {}, "unpoPerk": "ID_PASS", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-17T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://hello82.com/", "defDomShip": 0, "defOvsShip": 0, "custom": true}, {"id": "s13", "distId": "d10", "name": "TME", "country": "CN", "priceMode": "country", "customPrices": {}, "unpoPerk": "PHOTOBOOK", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "https://i2.y.qq.com/n3/cm/pages/putao/product_detail/index.html?productID=1205354113456059", "defDomShip": 0, "defOvsShip": 70, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"id": "s14", "distId": "d11", "name": "Will Music", "country": "TW", "priceMode": "country", "customPrices": {}, "unpoPerk": "POCAALBUM", "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-20T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "url": "", "defDomShip": 0, "defOvsShip": 0, "custom": true, "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "TME", "distId": "dcs1774544809341", "country": "KR", "unpoPerk": "PHOTOBOOK", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 22683.6, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}, "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-03-27T08:00", "purchaseEndTxt": "특전 소진시까지", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036611347409231996?s=20", "custom": true, "id": "cs1774545021788", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "Will Music", "distId": "dcs1774544809341", "country": "KR", "unpoPerk": "POCAALBUM", "priceMode": "custom", "customPrices": {"PHOTOBOOK": null, "POCAALBUM": 52532, "ID_PASS": null, "INVENTORY": null}, "purchaseStart": "2026-03-24T11:00", "purchaseEnd": "2026-04-13T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036611347409231996?s=20", "custom": true, "id": "cs1774545187345", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "[음총] 케타포", "distId": "dcs1774619329527", "country": "KR", "unpoPerk": "", "priceMode": "country", "customPrices": {}, "purchaseStart": "2026-03-24T02:18", "purchaseEnd": "2026-04-14T17:00", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://kr.ktown4u.com/eventinfo?eve_no=44113596&biz_no=967", "custom": true, "id": "cs1774545544751", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "[음총] 비트로드", "distId": "dcs1774619310313", "country": "KR", "unpoPerk": "", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 16500, "POCAALBUM": 10100, "ID_PASS": 18400, "INVENTORY": 21100}, "purchaseStart": "2026-03-24T02:21", "purchaseEnd": "2026-04-12T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036292541986001367?s=20", "custom": true, "id": "cs1774545708995", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "[음총] 버프즈", "distId": "dcs1774619302089", "country": "KR", "unpoPerk": "", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 19000, "POCAALBUM": 7790, "ID_PASS": 14155, "INVENTORY": 16245}, "purchaseStart": "2026-03-24T02:23", "purchaseEnd": "2026-04-03T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036291046146265331?s=20", "custom": true, "id": "cs1774545824537", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "[음총] 디어마이뮤즈", "distId": "dcs1774619306510", "country": "KR", "unpoPerk": "", "priceMode": "country", "customPrices": {}, "purchaseStart": "2026-03-24T02:25", "purchaseEnd": "2026-04-14T19:00", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036340525821993312?s=20", "custom": true, "id": "cs1774545937612", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "HMV", "distId": "dcs1774546040116", "country": "KR", "unpoPerk": "ID_PASS", "priceMode": "custom", "customPrices": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": 24210, "INVENTORY": null}, "purchaseStart": "2026-03-24T02:28", "purchaseEnd": "2026-03-29T23:59", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036341423856034026?s=20", "custom": true, "id": "cs1774546033455", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "타워레코드", "distId": "dcs1774546040116", "country": "KR", "unpoPerk": "ID_PASS", "priceMode": "custom", "customPrices": {"PHOTOBOOK": 24410, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}, "purchaseStart": "", "purchaseEnd": "", "purchaseEndTxt": "", "offlineStart": "", "offlineEnd": "", "offlineNote": "", "defDomShip": 0, "defOvsShip": 0, "url": "https://x.com/Plave_Album/status/2036341423856034026?s=20", "custom": true, "id": "cs1774546219159", "offlineHours": "", "offlineAddress": "", "offlineLuckyDraw": false}, {"name": "더현대서울", "distId": "", "country": "KR", "unpoPerk": "POCAALBUM", "priceMode": "country", "customPrices": {}, "purchaseStart": "", "purchaseEnd": "", "purchaseEndTxt": "", "offlineStart": "2026-04-14", "offlineEnd": "2026-04-19", "offlineNote": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80e1-b7b5-d07592ac0481\n모든 버전 구매시 미공포", "defDomShip": 0, "defOvsShip": 0, "url": "", "custom": true, "id": "cs1774546314667"}, {"name": "길보드", "distId": "", "country": "KR", "unpoPerk": "POCAALBUM", "priceMode": "country", "customPrices": {}, "purchaseStart": "2026-04-20T15:00", "purchaseEnd": "2026-04-20T23:00", "purchaseEndTxt": "", "offlineStart": "2026-04-20", "offlineEnd": "2026-04-20", "offlineNote": "모든 버전 구매시 미공포", "defDomShip": 0, "defOvsShip": 0, "url": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80d4-91e3-e505275bb65c", "custom": true, "id": "cs1774546479074"}];
 
 // ═══════════════════════════════════════════
 // STATE
@@ -386,6 +429,9 @@ let S = {
   calDay: null,
   sortBy:'date', sortDir:'desc', sortStore:'',
   adminUnlocked:false,
+  calShowOnline:true, calShowOffline:true,
+  hideExpired:false,
+  dataAt:'2026-03-27',
 };
 
 function save(){try{const toSave={...S,adminUnlocked:false};localStorage.setItem('plave2_v2',JSON.stringify(toSave));}catch(e){}}
@@ -467,6 +513,7 @@ function dDays(dt){
 }
 function stBadge(st){const s=STATUSES.find(x=>x.k===st)||STATUSES[0];return `<span class="bx ${s.cls}">${s.lb}</span>`;}
 function distName(distId){return S.distributors.find(d=>d.id===distId)?.name||'';}
+function platName(distId){return distName(distId);} // alias
 function storeFull(store){
   if(!store)return '?';
   const dist=distName(store.distId);
@@ -475,6 +522,10 @@ function storeFull(store){
   if(dist)lines.push(dist+' · '+ctry);
   else lines.push(ctry);
   return lines;
+}
+function fmtStoreName(name){
+  if(!name)return name;
+  return name.replace('[음총]','<span style="color:var(--info);font-size:11px" title="음원총판">🎵음총</span>');
 }
 function storeLabel(store,badge=true){
   if(!store)return '?';
@@ -535,7 +586,7 @@ async function fetchRates(){
         S.rates[c].updAt=now;
       }
     });
-    S.ratesAt=now;save();renderRateRow();render();toast('✓ 환율 업데이트');
+    S.ratesAt=now;save();render();toast('✓ 환율 업데이트');
   }catch(e){
     try{
       const r2=await fetch('https://open.er-api.com/v6/latest/KRW');
@@ -547,7 +598,7 @@ async function fetchRates(){
           S.rates[c].updAt=now;
         }
       });
-      S.ratesAt=now;save();renderRateRow();render();toast('✓ 환율 업데이트');
+      S.ratesAt=now;save();render();toast('✓ 환율 업데이트');
     }catch(e2){toast('⚠ 환율 자동조회 실패 — 수동입력 이용','warn');}
   }
 }
@@ -573,6 +624,10 @@ function renderDash(){
   // Status counts
   const bySt={none:0,waiting:0,ordered:0,shipwait:0,shipping:0,delivered:0};
   S.stores.forEach(s=>{if(!storeWithPurch.has(s.id))bySt.none++;});
+
+  // Fixed release dates
+  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
+  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{const k=p.status||'waiting';bySt[k]=(bySt[k]||0)+1;});
   const totalPurchasable=S.stores.length;
   const doneCount=bySt.delivered;
@@ -582,34 +637,42 @@ function renderDash(){
 
   // Per-store spend
   const byStor={};
+
+  // Fixed release dates
+  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
+  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{byStor[p.storeId]=(byStor[p.storeId]||0)+calcTotal(p);});
 
   // Album counts
   const byAlb={};ALBUMS.forEach(a=>byAlb[a.k]=0);
+
+  // Fixed release dates
+  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
+  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{(p.items||[]).forEach(it=>{byAlb[it.k||it.type]=(byAlb[it.k||it.type]||0)+(it.qty||0);});});
 
   // Deadlines (with purchase status)
   const deadlines=S.stores.filter(s=>s.purchaseEnd)
     .map(s=>({s,d:dDays(s.purchaseEnd),hasPurch:storeWithPurch.has(s.id)}))
-    .filter(x=>x.d>-14).sort((a,b)=>a.d-b.d);
+    .filter(x=>S.hideExpired?x.d>=0:x.d>-14).sort((a,b)=>a.d-b.d);
 
   mc.innerHTML=`
   <!-- TOP STATS: 3 cards -->
   <div class="grid g3" style="margin-bottom:14px">
     <div class="stat" style="grid-column:span 1">
-      <div class="stat-lb">💰 확정 지출</div>
+      <div class="stat-lb">💰 구매비 (확정)</div>
       <div class="stat-v mono" style="color:var(--ac)">${fKRW(confirmedSpend)}</div>
-      ${waitingSpend>0?`<div class="stat-sub" style="color:var(--warn)">+ 구매대기 ${fKRW(waitingSpend)}</div>`:`<div class="stat-sub">${S.purchases.length}건</div>`}
+      <div class="stat-sub">${S.purchases.length}건 구매</div>
     </div>
     <div class="stat ok">
-      <div class="stat-lb">✅ 완료 / 🚚 진행중</div>
+      <div class="stat-lb">✅ 배송완료 / 🚚 진행</div>
       <div class="stat-v mono" style="color:var(--ok)">${doneCount} <span style="font-size:16px;color:var(--warn)">/ ${activeCount}</span></div>
-      <div class="stat-sub">배송완료 · 진행중</div>
+      <div class="stat-sub">완료 ${doneCount} · 배송중+대기 ${activeCount}</div>
     </div>
     <div class="stat info">
-      <div class="stat-lb">📋 구매미완료</div>
-      <div class="stat-v mono" style="color:var(--info)">${noneCount+waitCount}</div>
-      <div class="stat-sub">미구매 ${noneCount}곳 · 대기 ${waitCount}건</div>
+      <div class="stat-lb">📋 미구매 · 대기</div>
+      <div class="stat-v mono" style="color:var(--info)">${noneCount} <span style="font-size:14px;color:var(--warn)">/ ${waitCount}</span></div>
+      <div class="stat-sub">미구매 ${noneCount}곳 / 구매대기 ${waitCount}건</div>
     </div>
   </div>
 
@@ -641,7 +704,7 @@ function renderDash(){
   <div class="grid g2" style="margin-bottom:14px">
     <!-- DEADLINE with purchase indicator -->
     <div class="card">
-      <div class="card-hdr"><div class="card-ttl">⏰ 구매 마감일</div></div>
+      <div class="card-hdr"><div class="card-ttl">⏰ 구매 마감일</div><button class="btn btn-s btn-xs expired-hide-btn" onclick="S.hideExpired=!S.hideExpired;renderDash()">${S.hideExpired?"만료 숨김 ✓":"만료 표시"}</button></div>
       ${deadlines.length===0?'<div style="color:var(--tx3);font-size:13px">마감일 없음</div>':
       deadlines.map(({s,d,hasPurch})=>{
         const cls=d<0?'done':d<=2?'urg':d<=7?'soon':'';
@@ -654,7 +717,7 @@ function renderDash(){
         }).join(' '):'';
         return `<div class="dl-item ${cls}" style="cursor:pointer" onclick="toggleStoreDet('${s.id}');document.querySelector('.card:has(#store-spend-tbody)')?.scrollIntoView()">
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:600">${s.name}</div>
+            <div style="font-size:13px;font-weight:600">${s.name.replace("[음총]","").trim()}${s.name.includes("[음총]")?' <span class="bx bx-plt2" style="font-size:10px">🎵 음총</span>':''}</div>
             <div style="font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px">
               ${dt}
               ${pStatus?`<span style="margin-left:4px">· ${pStatus}</span>`:'<span style="color:var(--tx3);margin-left:4px">미구매</span>'}
@@ -697,7 +760,7 @@ function renderDash(){
   <!-- STORE SPEND TABLE -->
   <div class="card" style="margin-bottom:14px">
     <div class="card-hdr"><div class="card-ttl">🏪 판매처별 지출</div><span style="font-size:11px;color:var(--tx2)">클릭 → 상세</span></div>
-    <table><thead><tr><th>판매처</th><th>유통사 · 지역</th><th class="tr">건수</th><th class="tr">지출</th><th></th></tr></thead>
+    <table><thead><tr><th>판매처</th><th>플랫폼 · 지역</th><th class="tr">건수</th><th class="tr">지출</th><th></th></tr></thead>
     <tbody id="store-spend-tbody">
       ${Object.keys(byStor).length===0?'<tr><td colspan="5" class="tc" style="color:var(--tx3)">없음</td></tr>':
       Object.entries(byStor).sort((a,b)=>b[1]-a[1]).map(([sid,amt])=>{
@@ -706,8 +769,8 @@ function renderDash(){
         const dist=distName(store?.distId);
         const ctry=COUNTRIES[store?.country]?.lb||'';
         return `<tr class="tr-click" onclick="toggleStoreDet('${sid}')">
-          <td style="font-weight:600">${store?.name||sid}</td>
-          <td><span style="font-size:12px;color:var(--tx2)">${[dist,ctry].filter(Boolean).join(' · ')}</span></td>
+          <td style="font-weight:600">${(store?.name||sid).replace("[음총]","").trim()}${(store?.name||"").includes("[음총]")?' <span class="bx bx-plt2" style="font-size:10px">🎵</span>':''}</td>
+          <td><div style="font-size:12px"><span class="bx bx-plt" style="font-size:10px">🏷 ${dist||'—'}</span><br><span style="color:var(--tx2)">${ctry}</span></div></td>
           <td class="tr">${cnt}</td><td class="tr mono">${fKRW(amt)}</td>
           <td style="color:var(--tx3);font-size:11px" id="arr-${sid}">▸</td>
         </tr>
@@ -719,9 +782,7 @@ function renderDash(){
         <td colspan="2">확정 지출</td><td></td>
         <td class="tr mono" style="color:var(--ac)">${fKRW(confirmedSpend)}</td><td></td>
       </tr>
-      ${waitingSpend>0?`<tr><td colspan="2" style="color:var(--warn)">구매대기 포함</td><td></td>
-        <td class="tr mono" style="color:var(--warn)">${fKRW(totalSpendAll)}</td><td></td>
-      </tr>`:''}
+      ${waitingSpend>0?`<tr><td colspan="2" style="color:var(--warn)">+ 구매대기</td><td></td><td class="tr mono" style="color:var(--warn)">${fKRW(waitingSpend)}</td><td></td></tr>`:''}
     </tbody></table>
   </div>`;
 }
@@ -737,7 +798,7 @@ function showAlbumDetail(albumKey){
     const dist=distName(store?.distId);
     return `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap">
       <div style="flex:1">
-        <div style="font-weight:600;font-size:13px">${store?.name||'?'}</div>
+        <div style="font-weight:600;font-size:13px">${(store?.name||'?').replace('[음총]','').trim()}</div>
         ${dist?`<div style="font-size:11px;color:var(--tx2)">${dist} · ${COUNTRIES[store?.country]?.lb||''}</div>`:''}
       </div>
       <span class="mono" style="font-weight:700">${it?.qty||0}장</span>
@@ -790,7 +851,7 @@ function showStatusDetail(stKey){
     if(p._isStore){
       const dist=distName(p.store.distId);
       return `<div style="padding:10px 0;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px">
-        <div style="flex:1"><div style="font-weight:600">${p.store.name}</div>${dist?`<div style="font-size:11px;color:var(--tx2)">${dist}</div>`:''}</div>
+        <div style="flex:1"><div style="font-weight:600">${p.store.name.replace("[음총]","").trim()}</div>${dist?`<div style="display:inline-flex"><span class="bx bx-plt" style="font-size:10px;margin-top:2px">🏷 ${dist}</span></div>`:''}</div>
         <button class="btn btn-p btn-xs" onclick="closeM();addP('${p.store.id}')">+ 추가</button>
       </div>`;
     }
@@ -799,7 +860,7 @@ function showStatusDetail(stKey){
     const items=(p.items||[]).filter(i=>i.qty>0).map(i=>ALBUMS.find(a=>a.k===i.type)?.lb+' ×'+i.qty).join(', ')||'—';
     return `<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap">
       <div style="flex:1">
-        <div style="font-weight:600;font-size:13px">${store?.name||'?'}<span style="font-size:11px;color:var(--tx2);margin-left:6px">${distName(store?.distId)||''}</span></div>
+        <div style="font-weight:600;font-size:13px">${(store?.name||'?').replace('[음총]','').trim()}<span style="font-size:11px;color:var(--tx2);margin-left:6px">${distName(store?.distId)||''}</span></div>
         <div style="font-size:13px;color:var(--tx2)">${items}</div>
         ${p.owner?`<span class="bx bx-prx" style="margin-top:4px">👤 ${p.owner}</span>`:''}
       </div>
@@ -894,9 +955,9 @@ function renderPurch(){
   });
 
   const storeOpts=`<option value="">전체 판매처</option>`+
-    [...new Set(S.purchases.map(p=>p.storeId))].map(sid=>{
+    [...new Set(S.purchases.map(p=>p.storeId))].map(sid=>S.stores.find(x=>x.id===sid)).filter(Boolean).sort((a,b)=>a.name.localeCompare(b.name,'ko')).map(store=>{ const sid=store.id;
       const s=S.stores.find(x=>x.id===sid);
-      return `<option value="${sid}" ${ss===sid?'selected':''}>${s?.name||sid}</option>`;
+      return `<option value="${sid}" ${ss===sid?'selected':''}>${store.name}</option>`;
     }).join('');
 
   mc.innerHTML=`
@@ -944,8 +1005,9 @@ function pCard(p,hz){
       <div style="display:flex;flex-direction:column;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="bx ${ovs?'bx-ovs':'bx-dom'}" style="font-size:10px">${ovs?'해외':'국내'}</span>
-          <span class="pcard-store">${store.name}</span>
-          ${dist?`<span style="font-size:11px;color:var(--tx2)">${dist}</span>`:''}
+          <span class="pcard-store">${store.name.replace("[음총]","").trim()}</span>
+          ${store.name.includes("[음총]")?`<span class="bx bx-plt2" style="font-size:10px">🎵 음총</span>`:''}
+          ${dist?`<span class="bx bx-plt" style="font-size:10px">🏷 플랫폼: ${dist}</span>`:''}
           <span class="tag" style="font-size:10px">${ctry}</span>
         </div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
@@ -989,6 +1051,8 @@ function renderOvsCost(p,store,cur){
 function renderCal(){
   const mc=document.getElementById('main');
   const y=S.calYear,m=S.calMonth;
+  const showOnline=S.calShowOnline!==false;
+  const showOffline=S.calShowOffline!==false;
   const MN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
   const DOW=['일','월','화','수','목','금','토'];
   const first=new Date(y,m,1).getDay();
@@ -1007,14 +1071,18 @@ function renderCal(){
   }
 
   S.stores.forEach(s=>{
-    if(s.purchaseEnd) addEv(s.purchaseEnd,{type:'dl',store:s,label:s.name});
-    if(s.offlineStart){
+    if(showOnline && s.purchaseEnd) addEv(s.purchaseEnd,{type:'dl',store:s,label:s.name});
+    if(showOffline && s.offlineStart){
       const st=new Date(s.offlineStart),en=s.offlineEnd?new Date(s.offlineEnd):new Date(s.offlineStart);
       for(let d=new Date(st);d<=en;d.setDate(d.getDate()+1)){
         addEv(d.toISOString().slice(0,10),{type:'off',store:s,label:s.name});
       }
     }
   });
+
+  // Fixed release dates
+  addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
+  addEv('2026-04-14',{type:'release',label:'ALBUM RELEASE',color:'var(--ok)',store:null,fixed:true});
   S.purchases.forEach(p=>{
     if(p.purchaseDate){
       const store=S.stores.find(s=>s.id===p.storeId);
@@ -1037,9 +1105,13 @@ function renderCal(){
     const hasPurch=types.has('pur');
 
     // Show max 2 event strips in cell
-    const strips=evs.slice(0,2).map(ev=>{
+    // Fixed releases always show first
+    const releaseEvs=evs.filter(e=>e.type==='release');
+    const otherEvs=evs.filter(e=>e.type!=='release');
+    const displayEvs=[...releaseEvs,...otherEvs].slice(0,3);
+    const strips=displayEvs.map(ev=>{
       const shortName=ev.label.length>8?ev.label.slice(0,8)+'…':ev.label;
-      const pfx=ev.type==='dl'?'⏰':ev.type==='off'?'📍':'✓';
+      const pfx=ev.type==='dl'?'⏰':ev.type==='off'?'📍':ev.type==='release'?'🎵':'✓';
       return `<div class="cal-ev-strip ${ev.type}">${pfx} ${shortName}</div>`;
     }).join('');
     const more=evs.length>2?`<div style="font-size:9px;color:var(--tx3)">+${evs.length-2}개</div>`:'';
@@ -1057,11 +1129,22 @@ function renderCal(){
   const dayEvs=S.calDay&&evMap[S.calDay];
   let detailHtml='';
   if(dayEvs){
-    const grouped={dl:[],off:[],pur:[]};
-    dayEvs.forEach(ev=>grouped[ev.type]?.push(ev));
+    const grouped={dl:[],off:[],pur:[],release:[]};
+    dayEvs.forEach(ev=>{const k=ev.type;if(grouped[k])grouped[k].push(ev);});
 
     detailHtml=`<div class="cal-detail">
       <div style="font-weight:700;font-size:14px;margin-bottom:10px">📅 ${S.calDay}</div>`;
+
+    // Release events (fixed)
+    grouped.release.forEach(ev=>{
+      detailHtml+=`<div class="cal-detail-ev">
+        <div class="cal-detail-head">
+          <div class="cal-ev-dot" style="width:8px;height:8px;border-radius:50%;background:var(--ac2);flex-shrink:0"></div>
+          <div style="font-weight:700;font-size:15px;color:var(--ac2)">${ev.label} 🎵</div>
+        </div>
+        <div class="cal-info-row"><span>📅</span><span>PLAVE 4th Mini Album Caligo Pt.2</span></div>
+      </div>`;
+    });
 
     // Deadlines
     grouped.dl.forEach(ev=>{
@@ -1136,15 +1219,17 @@ function renderCal(){
 
   mc.innerHTML=`<div class="cal-wrap">
     <div class="cal-nav">
-      <button class="btn btn-s btn-sm" onclick="calMove(-1)">‹ 이전</button>
+      <button class="btn btn-s btn-sm" onclick="calMove(-1)">‹</button>
       <div class="cal-nav-title">${y}년 ${MN[m]}</div>
-      <button class="btn btn-s btn-sm" onclick="calMove(1)">다음 ›</button>
+      <button class="btn btn-s btn-sm" onclick="calMove(1)">›</button>
     </div>
-    <div style="margin-bottom:8px;display:flex;gap:10px;font-size:11px;color:var(--tx2);flex-wrap:wrap">
-      <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:var(--err);display:inline-block"></span>마감일</span>
-      <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:var(--pk);display:inline-block"></span>오프라인</span>
-      <span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:var(--ac);display:inline-block"></span>구매일</span>
-      <span style="color:var(--ok)">구매✓ = 구매완료</span>
+    <div class="cal-toggle-row">
+      <span class="chip sm ${showOnline?'on':''}" onclick="S.calShowOnline=!S.calShowOnline;renderCal()">🛍 온라인판매</span>
+      <span class="chip sm ${showOffline?'on':''}" onclick="S.calShowOffline=!S.calShowOffline;renderCal()">📍 오프라인</span>
+      <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--tx2)">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--ac2);display:inline-block"></span>디지털/앨범발매
+      </span>
+      <span style="font-size:11px;color:var(--ok)">✓ 구매완료</span>
     </div>
     <div class="cal-grid">
       ${DOW.map((d,i)=>`<div class="cal-dow" style="${i===0?'color:var(--err)':i===6?'color:var(--ac)':''}">${d}</div>`).join('')}
@@ -1167,9 +1252,11 @@ function selCalDay(ds){S.calDay=S.calDay===ds?null:ds;render();}
 function renderMgr(){
   const mc=document.getElementById('main');
   const sub=S.mgrSub||'stores';
+  // Ensure admin unlock for non-stores subs
+
   mc.innerHTML=`
   <div class="sub-tabs">
-    <div class="sub-tab ${sub==='stores'?'on':''}" onclick="S.mgrSub='stores';renderMgr()">🏪 판매처 / 유통사</div>
+    <div class="sub-tab ${sub==='stores'?'on':''}" onclick="S.mgrSub='stores';renderMgr()">🏪 판매처 / 플랫폼</div>
     <div class="sub-tab ${sub==='prices'?'on':''}" onclick="S.mgrSub='prices';renderMgr()">💰 단가 관리</div>
     <div class="sub-tab ${sub==='rates'?'on':''}" onclick="S.mgrSub='rates';renderMgr()">💱 환율</div>
   </div>
@@ -1179,7 +1266,7 @@ function renderMgr(){
   else renderMgrAdmin('rates');
 }
 
-const ADMIN_PW = 'pllize0312'; // Change this password
+const ADMIN_PW = '1234'; // Change this password
 function renderMgrAdmin(mode){
   const el=document.getElementById('mgr-sub');
   if(S.adminUnlocked){
@@ -1214,13 +1301,13 @@ function renderMgrStores(){
   const el=document.getElementById('mgr-sub');
   el.innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="font-weight:600">판매처 목록 (${S.stores.length}곳)</div>
+    <div style="font-weight:600">판매처 목록 (${S.stores.length}곳) <span style='font-size:11px;color:var(--tx2)'>— ⚙ 관리자 전용</span></div>
     <div style="display:flex;gap:6px">
-      <button class="btn btn-s btn-sm" onclick="openDistMgr()">유통사 관리</button>
+      <button class="btn btn-s btn-sm" onclick="openDistMgr()">플랫폼 관리</button>
       <button class="btn btn-p btn-sm" onclick="addStore()">+ 판매처 추가</button>
     </div>
   </div>
-  ${S.stores.map(s=>storeCard(s)).join('')}`;
+  ${[...S.stores].sort((a,b)=>a.name.localeCompare(b.name,'ko')).map(s=>storeCard(s)).join('')}`;
 }
 
 function storeCard(s){
@@ -1232,7 +1319,7 @@ function storeCard(s){
   return `<div class="scard">
     <div style="display:flex;align-items:flex-start;gap:8px">
       <div style="flex:1">
-        <div class="scard-name">${s.name}</div>
+        <div class="scard-name">${s.name.replace("[음총]","").trim()} ${s.name.includes("[음총]")?'<span class="bx bx-plt2" style="font-size:10px">🎵 음총</span>':''}</div>
         <div class="scard-dist">${distName(s.distId)||''}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">
           <span class="bx ${ovs?'bx-ovs':'bx-dom'}">${COUNTRIES[s.country]?.lb||s.country}</span>
@@ -1270,6 +1357,7 @@ function storeCard(s){
       }).join('')}
     </div>`:''}
     ${s.url?`<div style="margin-top:8px"><a href="${s.url}" target="_blank" class="btn btn-s btn-xs">🔗 구매 링크</a></div>`:''}
+    ${s.memo?`<div style="margin-top:6px;font-size:12px;color:var(--tx2);padding:6px 8px;background:var(--sur2);border-radius:4px">📝 ${s.memo}</div>`:''}
   </div>`;
 }
 
@@ -1312,7 +1400,7 @@ function renderMgrRates(){
         ${c==='OTHER'?`<div class="fg"><div class="fl">통화명</div><input type="text" value="${r.name||''}" onchange="S.rates['${c}'].name=this.value;save()"></div>`:''}
         <div class="fg">
           <div class="fl">1 ${c==='OTHER'?r.name||'기타':c} = __ 원</div>
-          <input type="number" step="0.01" value="${r.rate}" onchange="S.rates['${c}'].rate=parseFloat(this.value)||0;save();renderRateRow()" ${!r.manual?'readonly style="background:var(--sur3);color:var(--tx2)"':''}>
+          <input type="number" step="0.01" value="${r.rate}" onchange="S.rates['${c}'].rate=parseFloat(this.value)||0;save()" ${!r.manual?'readonly style="background:var(--sur3);color:var(--tx2)"':''}>
           ${!r.manual?`<div class="fn">${r.updAt?'✓ '+new Date(r.updAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+' 업데이트':'자동조회 대기'}</div>`:`<div class="fn" style="color:var(--warn)">수동입력 (자동조회 제외)</div>`}
         </div>
         <div style="font-size:12px;color:var(--tx2)">예시: 1,000 = ${fKRW(1000*r.rate)}</div>
@@ -1505,14 +1593,14 @@ function delStore(id){
 }
 function showStoreM(s,isEdit){
   window._es=s;
-  const distOpts=S.distributors.map(d=>`<option value="${d.id}" ${s.distId===d.id?'selected':''}>${d.name}</option>`).join('');
+  const distOpts=[...S.distributors].sort((a,b)=>a.name.localeCompare(b.name,'ko')).map(d=>`<option value="${d.id}" ${s.distId===d.id?'selected':''}>${d.name}</option>`).join('');
   const cntOpts=Object.entries(COUNTRIES).map(([k,v])=>`<option value="${k}" ${(s.country||'KR')===k?'selected':''}>${v.lb}</option>`).join('');
   const perkOpts=ALBUMS.map(a=>`<option value="${a.k}" ${s.unpoPerk===a.k?'selected':''}>${a.lb}</option>`).join('');
   openM(isEdit?'판매처 수정':'판매처 추가',`
   <div class="fr2 fg">
     <div><div class="fl">판매처명 <span class="req">*</span></div>
       <input type="text" id="sf-n" value="${s.name||''}" placeholder="예: VLAST SHOP"></div>
-    <div><div class="fl">유통사</div>
+    <div><div class="fl">🏷 플랫폼 <span style="font-size:10px;color:var(--tx2)">(판매 유통 경로)</span></div>
       <select id="sf-d"><option value="">선택안함</option>${distOpts}</select></div>
   </div>
   <div class="fr2 fg">
@@ -1562,7 +1650,9 @@ function showStoreM(s,isEdit){
     <div><div class="fl">기본 배송비 (국내, 원화)</div><input type="number" id="sf-ds" value="${s.defDomShip||0}"></div>
     <div><div class="fl">기본 해외내배송 (현지통화)</div><input type="number" id="sf-os2" value="${s.defOvsShip||0}"></div>
   </div>
-  <div class="fg"><div class="fl">구매 URL</div><input type="url" id="sf-u" value="${s.url||''}" placeholder="https://..."></div>`);
+  <div class="fg"><div class="fl">구매 URL</div><input type="url" id="sf-u" value="${s.url||''}" placeholder="https://..."></div>
+  <div class="fg"><div class="fl">📝 메모 (판매처 관련 참고사항)</div>
+    <textarea id="sf-memo" rows="2" placeholder="특이사항, 참고링크 등">${s.memo||''}</textarea></div>`);
   document.getElementById('m-foot').innerHTML=`
     <button class="btn btn-s" onclick="closeM()">취소</button>
     <button class="btn btn-p" onclick="_saveStore(${isEdit})">저장</button>`;
@@ -1607,6 +1697,7 @@ function _saveStore(isEdit){
   s.defDomShip=parseFloat(document.getElementById('sf-ds')?.value)||0;
   s.defOvsShip=parseFloat(document.getElementById('sf-os2')?.value)||0;
   s.url=document.getElementById('sf-u')?.value||'';
+  s.memo=document.getElementById('sf-memo')?.value||'';
   s.custom=true;
   if(!isEdit){s.id='cs'+Date.now();S.stores.push(s);}
   else{const idx=S.stores.findIndex(x=>x.id===s.id);if(idx>=0)S.stores[idx]=s;}
@@ -1617,7 +1708,7 @@ function _saveStore(isEdit){
 function openDistMgr(){
   const html=`
   <div style="margin-bottom:12px;display:flex;gap:8px">
-    <input type="text" id="dist-n" placeholder="유통사명" style="flex:1">
+    <input type="text" id="dist-n" placeholder="플랫폼명" style="flex:1">
     <button class="btn btn-p btn-sm" onclick="_addDist()">+ 추가</button>
   </div>
   <div id="dist-list">
@@ -1626,7 +1717,7 @@ function openDistMgr(){
       <button class="btn btn-d btn-xs" onclick="_delDist('${d.id}')">삭제</button>
     </div>`).join('')}
   </div>`;
-  openM('유통사 관리',html);
+  openM('플랫폼 관리',html);
   document.getElementById('m-foot').innerHTML=`<button class="btn btn-s" onclick="closeM();renderMgr()">닫기</button>`;
 }
 function _addDist(){
@@ -1656,6 +1747,7 @@ function openM(ttl,body){
 }
 function closeM(){document.getElementById('ov').classList.remove('open');window._ep=null;window._es=null;}
 function ovClick(e){if(e.target===document.getElementById('ov'))closeM();}
+document.addEventListener('click',function(e){const p=document.getElementById('rate-popup');if(p&&p.classList.contains('open')&&!p.contains(e.target)&&e.target.id!=='rate-icon-btn')p.classList.remove('open');});
 
 // ═══════════════════════════════════════════
 // EXPORT / IMPORT
@@ -1676,17 +1768,81 @@ function importData(inp){
       if(d.distributors) S.distributors=d.distributors;
       if(d.rates) S.rates={...S.rates,...d.rates};
       if(d.countryPrices) S.countryPrices=d.countryPrices;
-      save();renderRateRow();render();toast(`✓ 불러오기 완료 (${S.purchases.length}건)`);
+      save();render();toast(`✓ 불러오기 완료 (${S.purchases.length}건)`);
     }catch(e2){toast('⚠ 파일 오류','err');}
     inp.value='';
   };r.readAsText(f);
+}
+
+
+// ── SECRET ADMIN ACCESS ──
+let _adminTaps=0,_adminTimer=null;
+function secretAdminTap(){
+  // Also show admin tab if desktop
+  const adminBtn=document.getElementById('admin-secret-btn');
+
+  _adminTaps++;
+  clearTimeout(_adminTimer);
+  if(_adminTaps>=5){_adminTaps=0;S.adminUnlocked=true;S.mgrSub='stores';go('mgr');
+    if(adminBtn)adminBtn.style.opacity='1';
+    const ba=document.getElementById('bot-admin');if(ba)ba.style.display='';
+  }
+  else _adminTimer=setTimeout(()=>_adminTaps=0,1500);
+}
+
+// ── RATE POPUP ──
+function toggleRatePopup(){
+  const p=document.getElementById('rate-popup');
+  if(!p)return;
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) renderRatePopup();
+}
+function renderRatePopup(){
+  const p=document.getElementById('rate-popup');
+  if(!p)return;
+  const upd=S.ratesAt?new Date(S.ratesAt).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'미조회';
+  p.innerHTML=`<div style="font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+    <span>💱 환율</span>
+    <button class="btn btn-p btn-xs" onclick="fetchRates().then(()=>renderRatePopup())">↻ 갱신</button>
+  </div>
+  ${['JPY','CNY','USD','TWD'].map(c=>{
+    const r=S.rates[c];
+    const lbs={JPY:'🇯🇵 JPY',CNY:'🇨🇳 CNY',USD:'🇺🇸 USD',TWD:'🇹🇼 TWD'};
+    return `<div class="rate-row-item"><span>${lbs[c]}</span><b>${Math.round(r.rate).toLocaleString()}원</b></div>`;
+  }).join('')}
+  <div style="font-size:10px;color:var(--tx3);margin-top:6px">업데이트: ${upd}</div>`;
+}
+function renderRateRow(){} // no-op, popup used instead
+
+// ── DATA MANAGER ──
+function openDataMgr(){
+  openM('💾 데이터 관리',`
+  <div class="data-section">
+    <div class="data-section-ttl">⬇ 내보내기 <span style="font-size:11px;color:var(--ok)">→ 파일로 저장</span></div>
+    <p>현재 앱의 <b>구매기록 전체</b>를 JSON 파일로 저장합니다.<br>
+    저장된 파일은 다른 기기(폰↔컴퓨터)에서 불러올 수 있고, 백업 용도로도 쓸 수 있어요.</p>
+    <button class="btn btn-p" onclick="exportData()">⬇ 내보내기 (파일 저장)</button>
+  </div>
+  <div class="data-section">
+    <div class="data-section-ttl">⬆ 불러오기 <span style="font-size:11px;color:var(--warn)">← 파일에서 복원</span></div>
+    <p>이전에 내보낸 JSON 파일을 선택하면 구매기록이 복원됩니다.<br>
+    ⚠️ <b>현재 기록이 덮어씌워지므로</b> 먼저 내보내기를 해두세요!</p>
+    <button class="btn btn-s" onclick="document.getElementById('imp').click()">⬆ 불러오기 (파일 선택)</button>
+  </div>
+  <div class="data-section" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2)">
+    <div class="data-section-ttl" style="color:var(--err)">💡 크로스 기기 사용 방법</div>
+    <p>📱 폰에서 작성 → ⬇ 내보내기 → 파일 공유(카카오톡/이메일 등)<br>
+    💻 컴퓨터에서 파일 받은 후 → ⬆ 불러오기<br>
+    ✅ 각 기기의 브라우저에 자동 저장되므로 매번 할 필요는 없어요.</p>
+  </div>`);
+  document.getElementById('m-foot').innerHTML=`<button class="btn btn-s" onclick="closeM()">닫기</button>`;
 }
 
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 function init(){
-  load();renderRateRow();render();
+  load();render();
   const stale=!S.ratesAt||(Date.now()-new Date(S.ratesAt).getTime())>3600000;
   if(stale) fetchRates();
 }
