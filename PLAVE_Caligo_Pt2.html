@@ -2,7 +2,7 @@
 <html lang="ko" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>PLAVE Caligo Pt.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -24,7 +24,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;overflow-x:hidden}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;overflow:hidden;height:100vh;height:100svh}
 a{color:var(--ac);text-decoration:none}
 button{cursor:pointer;font-family:inherit;font-size:14px;border:none;outline:none}
 input,select,textarea{font-family:inherit;font-size:14px;color:var(--tx);background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:8px 12px;width:100%;outline:none}
@@ -36,7 +36,7 @@ select option{background:var(--sur)}
 ::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:3px}
 
 /* LAYOUT */
-.app{display:flex;flex-direction:column;height:100vh}
+.app{display:flex;flex-direction:column;height:100vh;height:100svh;min-height:-webkit-fill-available}
 .hdr{background:var(--sur);border-bottom:1px solid var(--bd);padding:0 16px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:50}
 .hdr-logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
 .rate-row{flex:1;display:flex;gap:6px;justify-content:center;flex-wrap:nowrap;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
@@ -58,10 +58,10 @@ select option{background:var(--sur)}
 .sub-tab.on{background:var(--ac-g);border-color:var(--ac);color:var(--ac)}
 
 /* MAIN */
-.main{flex:1;overflow-y:auto;padding:16px;padding-bottom:72px}
+.main{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
 
 /* MOBILE BOTTOM NAV */
-.bot-nav{position:fixed;bottom:0;left:0;right:0;background:var(--sur);border-top:1px solid var(--bd);display:none;z-index:100;height:56px}
+.bot-nav{position:fixed;bottom:0;left:0;right:0;background:var(--sur);border-top:1px solid var(--bd);display:none;z-index:100;height:56px;padding-bottom:env(safe-area-inset-bottom,0px)}
 .bot-nav-inner{display:flex;height:100%}
 .bot-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font-size:10px;color:var(--tx2);transition:color .15s}
 .bot-tab.on{color:var(--ac)}
@@ -260,6 +260,42 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 .sort-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:8px;background:var(--sur2);border-radius:var(--r-sm);border:1px solid var(--bd)}
 .sort-lbl{font-size:11px;color:var(--tx2);white-space:nowrap}
 
+
+/* STORE SPEND CARDS (mobile) */
+.spend-cards{display:flex;flex-direction:column;gap:8px}
+.spend-card{background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:12px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.spend-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac)}
+.spend-card:hover{border-color:var(--bd2)}
+.spend-card-name{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.spend-card-meta{font-size:11px;color:var(--tx2);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.spend-card-amt{font-family:'Space Grotesk',monospace;font-weight:700;font-size:16px;color:var(--ac);white-space:nowrap}
+.spend-card-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd);font-size:13px}
+.spend-card-detail.open{display:block}
+.spend-total{background:var(--ac-g);border:1px solid var(--ac);border-radius:var(--r-sm);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.spend-total-lb{font-size:13px;font-weight:600}
+.spend-total-v{font-family:'Space Grotesk',monospace;font-weight:700;font-size:18px;color:var(--ac)}
+
+/* STAT CARDS MOBILE */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-sm{background:var(--sur);border:1px solid var(--bd);border-radius:var(--r-sm);padding:12px;position:relative;overflow:hidden}
+.stat-sm::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac)}
+.stat-sm.ok::before{background:var(--ok)}
+.stat-sm.warn::before{background:var(--warn)}
+.stat-sm.info::before{background:var(--info)}
+.stat-sm-lb{font-size:10px;color:var(--tx2);margin-bottom:4px}
+.stat-sm-v{font-family:'Space Grotesk',monospace;font-weight:700;font-size:20px}
+.stat-sm-sub{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* STATUS STRIP */
+.status-strip{display:flex;gap:4px;padding:10px 12px;background:var(--sur);border:1px solid var(--bd);border-radius:var(--r-sm);margin-bottom:12px;flex-wrap:wrap;align-items:center}
+
+/* DEADLINE COMPACT */
+.dl-compact{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--bd)}
+.dl-compact:last-child{border-bottom:none}
+.dl-compact-name{flex:1;font-size:13px;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dl-compact-date{font-size:11px;color:var(--tx2);white-space:nowrap}
+.dl-compact-d{font-weight:700;font-size:12px;white-space:nowrap;min-width:42px;text-align:right}
+
 /* STORE LABEL */
 .store-full{display:flex;flex-direction:column;gap:1px}
 .store-full-main{font-size:13px;font-weight:600}
@@ -270,7 +306,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 
 
 /* HEADLINE */
-.hdr-headline{flex:1;text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;
+.hdr-headline{flex:1;text-align:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;overflow:hidden;
   background:linear-gradient(90deg,var(--ac),var(--pk),var(--ac));-webkit-background-clip:text;
   -webkit-text-fill-color:transparent;white-space:nowrap;letter-spacing:.5px;animation:shimmer 3s ease infinite;
   background-size:200% auto}
@@ -312,20 +348,42 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 @media(max-width:640px){
   .tabs-bar{display:none}
   .bot-nav{display:block}
-  .main{padding:12px;padding-bottom:68px}
+  .main{padding:10px;padding-bottom:66px}
   .g4,.g3{grid-template-columns:1fr 1fr}
   .g2{grid-template-columns:1fr}
   .fr3{grid-template-columns:1fr 1fr}
   .fr2{grid-template-columns:1fr}
   .stat-v{font-size:18px}
-  .modal{max-height:96vh}
+  .modal{max-height:94vh;max-height:94svh;border-radius:var(--r) var(--r) 0 0;margin-top:auto;align-self:flex-end;width:100%;max-width:100%}
+  .ov{align-items:flex-end;padding:0}
   .modal-body{padding:14px}
-  .hdr{height:48px;padding:0 12px;gap:8px}
-  .rate-row{justify-content:flex-start}
+  .modal-hdr{padding:12px 16px}
+  .hdr{height:48px;padding:0 10px;gap:6px}
+  .hdr-logo{font-size:14px}
+  .hdr-headline{font-size:11px}
+  .iBtn{width:30px;height:30px;font-size:14px}
+  .card{padding:12px}
+  .card-hdr{margin-bottom:8px}
+  table{font-size:12px}
+  th,td{padding:6px 8px}
+  .pcard-hdr{padding:10px 12px;gap:6px}
+  .pcard-body{padding:8px 12px}
+  .sub-tabs{gap:4px}
+  .sub-tab{padding:5px 10px;font-size:12px}
+  .chip{padding:4px 10px;font-size:11px}
+  .sort-bar{padding:6px 8px;gap:5px}
+  .cal-day{min-height:44px;padding:2px 3px}
+  .cal-dn{font-size:10px}
+  .cal-ev-strip{font-size:8px}
+  .cal-nav-title{font-size:14px}
+  .btn{padding:6px 12px;font-size:12px}
+  .btn-sm{padding:4px 8px;font-size:11px}
 }
 @media(max-width:380px){
   .g4,.g3,.g2{grid-template-columns:1fr}
   .fr3,.fr2{grid-template-columns:1fr}
+  .hdr-headline{display:none}
+  .stat-row{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -616,167 +674,202 @@ function renderRateRow(){
 function renderDash(){
   const mc=document.getElementById('main');
   const storeWithPurch=new Set(S.purchases.map(p=>p.storeId));
-  // Spend: confirmed vs waiting
-  const confirmedSpend=S.purchases.filter(p=>(p.status||'waiting')!=='waiting').reduce((s,p)=>s+calcTotal(p),0);
-  const waitingSpend=S.purchases.filter(p=>(p.status||'waiting')==='waiting').reduce((s,p)=>s+calcTotal(p),0);
-  const totalSpendAll=confirmedSpend+waitingSpend;
 
-  // Status counts
+  // ── Spend ──
+  const confirmedSpend=S.purchases.filter(p=>(p.status||'waiting')!=='waiting').reduce((s,p)=>s+calcTotal(p),0);
+  const waitingSpend  =S.purchases.filter(p=>(p.status||'waiting')==='waiting').reduce((s,p)=>s+calcTotal(p),0);
+
+  // ── Status counts ──
   const bySt={none:0,waiting:0,ordered:0,shipwait:0,shipping:0,delivered:0};
   S.stores.forEach(s=>{if(!storeWithPurch.has(s.id))bySt.none++;});
-
   S.purchases.forEach(p=>{const k=p.status||'waiting';bySt[k]=(bySt[k]||0)+1;});
   const totalPurchasable=S.stores.length;
-  const doneCount=bySt.delivered;
+  const doneCount =bySt.delivered;
   const activeCount=bySt.ordered+bySt.shipwait+bySt.shipping;
-  const waitCount=bySt.waiting;
-  const noneCount=bySt.none;
+  const waitCount =bySt.waiting;
+  const noneCount =bySt.none;
 
-  // Per-store spend
+  // ── Per-store spend ──
   const byStor={};
-
   S.purchases.forEach(p=>{byStor[p.storeId]=(byStor[p.storeId]||0)+calcTotal(p);});
 
-  // Album counts
+  // ── Album totals ──
   const byAlb={};ALBUMS.forEach(a=>byAlb[a.k]=0);
-
   S.purchases.forEach(p=>{(p.items||[]).forEach(it=>{byAlb[it.type]=(byAlb[it.type]||0)+(it.qty||0);});});
 
-  // Deadlines (with purchase status)
-  const deadlines=S.stores.filter(s=>s.purchaseEnd)
+  // ── Deadlines ──
+  const deadlines=S.stores
+    .filter(s=>s.purchaseEnd)
     .map(s=>({s,d:dDays(s.purchaseEnd),hasPurch:storeWithPurch.has(s.id)}))
-    .filter(x=>S.hideExpired?x.d>=0:x.d>-14).sort((a,b)=>a.d-b.d);
+    .filter(x=>S.hideExpired?x.d>=0:x.d>-14)
+    .sort((a,b)=>{if(a.d<0&&b.d>=0)return 1;if(a.d>=0&&b.d<0)return -1;return a.d-b.d;});
+
+  // ── Store spend sorted ──
+  const storeSorted=Object.entries(byStor).sort((a,b)=>b[1]-a[1]);
 
   mc.innerHTML=`
-  <!-- TOP STATS: 3 cards -->
-  <div class="grid g3" style="margin-bottom:14px">
-    <div class="stat" style="grid-column:span 1">
-      <div class="stat-lb">💰 구매비 (확정)</div>
-      <div class="stat-v mono" style="color:var(--ac)">${fKRW(confirmedSpend)}</div>
-      <div class="stat-sub">${S.purchases.length}건 구매</div>
-    </div>
-    <div class="stat ok">
-      <div class="stat-lb">✅ 배송완료 / 🚚 진행</div>
-      <div class="stat-v mono" style="color:var(--ok)">${doneCount} <span style="font-size:16px;color:var(--warn)">/ ${activeCount}</span></div>
-      <div class="stat-sub">완료 ${doneCount} · 배송중+대기 ${activeCount}</div>
-    </div>
-    <div class="stat info">
-      <div class="stat-lb">📋 미구매 · 대기</div>
-      <div class="stat-v mono" style="color:var(--info)">${noneCount} <span style="font-size:14px;color:var(--warn)">/ ${waitCount}</span></div>
-      <div class="stat-sub">미구매 ${noneCount}곳 / 구매대기 ${waitCount}건</div>
-    </div>
-  </div>
-
-  <!-- PROGRESS BAR (all statuses at a glance) -->
-  <div class="card" style="margin-bottom:14px;padding:12px 16px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      ${STATUSES.map(s=>{
-        const cnt=bySt[s.k]||0;
-        return `<div style="display:flex;align-items:center;gap:5px;cursor:${cnt>0?'pointer':'default'}" onclick="${cnt>0?`showStatusDetail('${s.k}')`:''}" title="${s.lb}: ${cnt}건">
-          <span class="bx ${s.cls}" style="font-size:11px">${s.lb} ${cnt}</span>
-        </div>`;
-      }).join('')}
-      <div style="flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;gap:1px;min-width:80px">
-        ${[
-          {k:'none',c:'var(--tx3)'},
-          {k:'waiting',c:'var(--warn)'},
-          {k:'ordered',c:'var(--ac)'},
-          {k:'shipwait',c:'var(--info)'},
-          {k:'shipping',c:'var(--info)'},
-          {k:'delivered',c:'var(--ok)'},
-        ].map(x=>{
-          const cnt=bySt[x.k]||0;const w=Math.round(cnt/Math.max(totalPurchasable,1)*100);
-          return cnt>0?`<div style="width:${w}%;background:${x.c};transition:width .4s"></div>`:'';
-        }).join('')}
+  <!-- ① STAT CARDS: 2×2 grid, compact -->
+  <div class="stat-row">
+    <div class="stat-sm" style="grid-column:span 2">
+      <div class="stat-sm-lb">💰 구매비 (확정)</div>
+      <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <span class="stat-sm-v mono" style="color:var(--ac);font-size:24px">${fKRW(confirmedSpend)}</span>
+        ${waitingSpend>0?`<span style="font-size:13px;color:var(--warn)">+ 대기 ${fKRW(waitingSpend)}</span>`:''}
       </div>
+      <div class="stat-sm-sub">${S.purchases.length}건 구매 기록</div>
+    </div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-sm ok">
+      <div class="stat-sm-lb">✅ 배송완료</div>
+      <div class="stat-sm-v" style="color:var(--ok)">${doneCount}</div>
+      <div class="stat-sm-sub">🚚 진행중 ${activeCount}</div>
+    </div>
+    <div class="stat-sm info">
+      <div class="stat-sm-lb">📋 미구매 / 대기</div>
+      <div class="stat-sm-v" style="color:var(--info)">${noneCount} <span style="font-size:14px;color:var(--warn)">/ ${waitCount}</span></div>
+      <div class="stat-sm-sub">미구매 ${noneCount}곳 · 대기 ${waitCount}건</div>
     </div>
   </div>
 
-  <div class="grid g2" style="margin-bottom:14px">
-    <!-- DEADLINE with purchase indicator -->
-    <div class="card">
-      <div class="card-hdr"><div class="card-ttl">⏰ 구매 마감일</div><button class="btn btn-s btn-xs expired-hide-btn" onclick="S.hideExpired=!S.hideExpired;renderDash()">${S.hideExpired?"만료 숨김 ✓":"만료 표시"}</button></div>
-      ${deadlines.length===0?'<div style="color:var(--tx3);font-size:13px">마감일 없음</div>':
-      deadlines.map(({s,d,hasPurch})=>{
-        const cls=d<0?'done':d<=2?'urg':d<=7?'soon':'';
-        const color=d<0?'var(--tx3)':d<=2?'var(--err)':d<=7?'var(--warn)':'var(--ok)';
-        const dt=s.purchaseEndTxt||(s.purchaseEnd?fDate(s.purchaseEnd):'');
-        const dd=d<0?`${Math.abs(d)}일 경과`:d===0?'오늘!':'D-'+d;
-        const pStatus=hasPurch?S.purchases.filter(p=>p.storeId===s.id).map(p=>{
-          const si=STATUSES.find(x=>x.k===(p.status||'waiting'));
-          return `<span class="bx ${si?.cls||''}" style="font-size:10px">${si?.lb}</span>`;
-        }).join(' '):'';
-        return `<div class="dl-item ${cls}" style="cursor:pointer" onclick="toggleStoreDet('${s.id}');document.querySelector('.card:has(#store-spend-tbody)')?.scrollIntoView()">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:600">${s.name.replace("[음총]","").trim()}${s.name.includes("[음총]")?' <span class="bx bx-plt2" style="font-size:10px">🎵 음총</span>':''}</div>
-            <div style="font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px">
-              ${dt}
-              ${pStatus?`<span style="margin-left:4px">· ${pStatus}</span>`:'<span style="color:var(--tx3);margin-left:4px">미구매</span>'}
+  <!-- ② STATUS STRIP: clickable badges in one row -->
+  <div class="status-strip">
+    ${STATUSES.map(s=>{
+      const cnt=bySt[s.k]||0;
+      return `<span class="bx ${s.cls}" style="cursor:${cnt>0?'pointer':'default'};opacity:${cnt>0?1:0.4}"
+        onclick="${cnt>0?`showStatusDetail('${s.k}')`:''}">${s.lb} <b>${cnt}</b></span>`;
+    }).join('')}
+    <div style="flex:1;display:flex;height:6px;border-radius:3px;overflow:hidden;gap:1px;min-width:60px">
+      ${[{k:'none',c:'var(--tx3)'},{k:'waiting',c:'var(--warn)'},{k:'ordered',c:'var(--ac)'},{k:'shipwait',c:'var(--info)'},{k:'shipping',c:'var(--info)'},{k:'delivered',c:'var(--ok)'}]
+        .map(x=>{const cnt=bySt[x.k]||0;const w=Math.round(cnt/Math.max(totalPurchasable,1)*100);return cnt>0?`<div style="width:${w}%;background:${x.c}"></div>`:'';}).join('')}
+    </div>
+  </div>
+
+  <!-- ③ STORE SPEND: prominent card list -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-hdr" style="margin-bottom:10px">
+      <div class="card-ttl">🏪 판매처별 지출</div>
+      <span style="font-size:11px;color:var(--tx2)">탭 → 상세</span>
+    </div>
+    ${storeSorted.length===0?
+      `<div style="color:var(--tx3);font-size:13px;padding:12px 0;text-align:center">구매 기록 없음</div>`:
+      `<div class="spend-cards">
+        ${storeSorted.map(([sid,amt])=>{
+          const store=S.stores.find(x=>x.id===sid);
+          const cnt=S.purchases.filter(p=>p.storeId===sid).length;
+          const dist=distName(store?.distId);
+          const ctry=COUNTRIES[store?.country]?.lb||'';
+          const isOvs_=isOvs(store);
+          const sName=(store?.name||sid).replace('[음총]','').trim();
+          const isEum=(store?.name||'').includes('[음총]');
+          const waiting=S.purchases.filter(p=>p.storeId===sid&&(p.status||'waiting')==='waiting').reduce((s,p)=>s+calcTotal(p),0);
+          return `<div class="spend-card" id="sc-${sid}" onclick="toggleSpendCard('${sid}')">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;min-width:0">
+                <div class="spend-card-name">
+                  <span>${sName}</span>
+                  ${isEum?`<span class="bx bx-plt2" style="font-size:10px">🎵 음총</span>`:''}
+                  <span class="bx ${isOvs_?'bx-ovs':'bx-dom'}" style="font-size:10px">${isOvs_?'해외':'국내'}</span>
+                </div>
+                <div class="spend-card-meta">
+                  ${dist?`<span class="bx bx-plt" style="font-size:10px">🏷 ${dist}</span>`:''}
+                  <span>${ctry}</span>
+                  <span>${cnt}건</span>
+                  ${waiting>0?`<span style="color:var(--warn)">대기 ${fKRW(waiting)}</span>`:''}
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div class="spend-card-amt">${fKRW(amt)}</div>
+                <div style="font-size:10px;color:var(--tx3);margin-top:2px">탭 ▸</div>
+              </div>
             </div>
-          </div>
-          <div style="font-weight:700;color:${color};white-space:nowrap">${dd}</div>
+            <div class="spend-card-detail" id="scd-${sid}">
+              ${buildStoreDet(sid)}
+            </div>
+          </div>`;
+        }).join('')}
+        <div class="spend-total">
+          <span class="spend-total-lb">💰 확정 합계</span>
+          <span class="spend-total-v">${fKRW(confirmedSpend)}</span>
+        </div>
+        ${waitingSpend>0?`<div style="display:flex;justify-content:space-between;padding:6px 2px;font-size:12px;color:var(--warn)">
+          <span>⏳ 구매대기 포함 합계</span>
+          <span class="mono" style="font-weight:700">${fKRW(confirmedSpend+waitingSpend)}</span>
+        </div>`:''}
+      </div>`
+    }
+  </div>
+
+  <!-- ④ DEADLINE + ALBUMS: side by side on tablet, stacked on mobile -->
+  <div class="grid g2" style="margin-bottom:12px">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-ttl">⏰ 구매 마감일</div>
+        <button class="btn btn-s btn-xs" onclick="S.hideExpired=!S.hideExpired;renderDash()" style="font-size:10px">${S.hideExpired?'만료 표시':'만료 숨김'}</button>
+      </div>
+      ${deadlines.length===0?'<div style="color:var(--tx3);font-size:12px">마감일 없음</div>':
+      `<div>${deadlines.map(({s,d,hasPurch})=>{
+        const color=d<0?'var(--tx3)':d<=2?'var(--err)':d<=7?'var(--warn)':'var(--ok)';
+        const dd=d<0?`${Math.abs(d)}일전`:d===0?'오늘!':'D-'+d;
+        const sName=s.name.replace('[음총]','').trim();
+        const psCnt=S.purchases.filter(p=>p.storeId===s.id).length;
+        return `<div class="dl-compact" onclick="toggleSpendCard('${s.id}');document.getElementById('sc-${s.id}')?.scrollIntoView({behavior:'smooth',block:'center'})" style="cursor:pointer">
+          <div class="dl-compact-name" title="${sName}">${sName}</div>
+          <div class="dl-compact-date">${s.purchaseEndTxt||(s.purchaseEnd?s.purchaseEnd.slice(5,10):'')}</div>
+          ${hasPurch?`<span class="bx bx-ord" style="font-size:10px;flex-shrink:0">✓${psCnt}</span>`:'<span class="bx bx-none" style="font-size:10px;flex-shrink:0">미구매</span>'}
+          <div class="dl-compact-d" style="color:${color}">${dd}</div>
         </div>`;
-      }).join('')}
+      }).join('')}</div>`}
     </div>
 
-    <!-- ALBUM COUNTS (clickable) -->
     <div class="card">
-      <div class="card-hdr"><div class="card-ttl">💿 앨범별 수량</div><span style="font-size:11px;color:var(--tx2)">클릭 → 조회</span></div>
+      <div class="card-hdr"><div class="card-ttl">💿 앨범별 수량</div><span style="font-size:11px;color:var(--tx2)">탭 → 조회</span></div>
       ${ALBUMS.map(a=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);cursor:${byAlb[a.k]>0?'pointer':'default'};border-radius:4px"
-          onclick="${byAlb[a.k]>0?`showAlbumDetail('${a.k}')`:''}" ${byAlb[a.k]>0?'onmouseover="this.style.background=\'var(--sur2)\'" onmouseout="this.style.background=\'\'"':''}>
-          <span>${a.lb}</span>
-          <span class="mono" style="font-weight:700;font-size:16px;color:${byAlb[a.k]>0?'var(--ac)':'var(--tx3)'}">
-            ${byAlb[a.k]}장 ${byAlb[a.k]>0?'<span style="font-size:11px;color:var(--tx3)">▸</span>':''}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bd);cursor:${byAlb[a.k]>0?'pointer':'default'}"
+          onclick="${byAlb[a.k]>0?`showAlbumDetail('${a.k}')`:''}" >
+          <span style="font-size:13px">${a.lb}</span>
+          <span class="mono" style="font-weight:700;font-size:15px;color:${byAlb[a.k]>0?'var(--ac)':'var(--tx3)'}">
+            ${byAlb[a.k]}장${byAlb[a.k]>0?' ›':''}
           </span>
         </div>`).join('')}
-      <div style="display:flex;justify-content:space-between;padding-top:10px;font-weight:700">
+      <div style="display:flex;justify-content:space-between;padding-top:8px;font-weight:700;font-size:14px">
         <span>총계</span>
-        <span class="mono" style="font-size:18px;color:var(--ok)">${Object.values(byAlb).reduce((a,b)=>a+b,0)}장</span>
+        <span class="mono" style="color:var(--ok)">${Object.values(byAlb).reduce((a,b)=>a+b,0)}장</span>
       </div>
       ${S.purchases.filter(p=>p.owner?.trim()).length>0?`
-        <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">
-          <div class="section-ttl">🎁 사다준 목록</div>
-          ${[...new Set(S.purchases.filter(p=>p.owner).map(p=>p.owner))].map(ow=>{
-            const t=S.purchases.filter(p=>p.owner===ow).reduce((s,p)=>s+calcTotal(p),0);
-            return `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
-              <span class="bx bx-prx">👤 ${ow}</span><span class="mono">${fKRW(t)}</span>
-            </div>`;
-          }).join('')}
-        </div>`:''
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bd)">
+        <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:5px">🎁 사다준 목록</div>
+        ${[...new Set(S.purchases.filter(p=>p.owner).map(p=>p.owner))].map(ow=>{
+          const t=S.purchases.filter(p=>p.owner===ow).reduce((s,p)=>s+calcTotal(p),0);
+          return `<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px">
+            <span class="bx bx-prx">👤 ${ow}</span><span class="mono">${fKRW(t)}</span>
+          </div>`;
+        }).join('')}
+      </div>`:''
       }
     </div>
-  </div>
-
-  <!-- STORE SPEND TABLE -->
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-hdr"><div class="card-ttl">🏪 판매처별 지출</div><span style="font-size:11px;color:var(--tx2)">클릭 → 상세</span></div>
-    <table><thead><tr><th>판매처</th><th>플랫폼 · 지역</th><th class="tr">건수</th><th class="tr">지출</th><th></th></tr></thead>
-    <tbody id="store-spend-tbody">
-      ${Object.keys(byStor).length===0?'<tr><td colspan="5" class="tc" style="color:var(--tx3)">없음</td></tr>':
-      Object.entries(byStor).sort((a,b)=>b[1]-a[1]).map(([sid,amt])=>{
-        const store=S.stores.find(x=>x.id===sid);
-        const cnt=S.purchases.filter(p=>p.storeId===sid).length;
-        const dist=distName(store?.distId);
-        const ctry=COUNTRIES[store?.country]?.lb||'';
-        return `<tr class="tr-click" onclick="toggleStoreDet('${sid}')">
-          <td style="font-weight:600">${(store?.name||sid).replace("[음총]","").trim()}${(store?.name||"").includes("[음총]")?' <span class="bx bx-plt2" style="font-size:10px">🎵</span>':''}</td>
-          <td><div style="font-size:12px"><span class="bx bx-plt" style="font-size:10px">🏷 ${dist||'—'}</span><br><span style="color:var(--tx2)">${ctry}</span></div></td>
-          <td class="tr">${cnt}</td><td class="tr mono">${fKRW(amt)}</td>
-          <td style="color:var(--tx3);font-size:11px" id="arr-${sid}">▸</td>
-        </tr>
-        <tr class="tr-detail" id="sdet-${sid}" style="display:none"><td colspan="5">
-          <div class="detail-inner">${buildStoreDet(sid)}</div>
-        </td></tr>`;
-      }).join('')}
-      <tr class="tr-foot">
-        <td colspan="2">확정 지출</td><td></td>
-        <td class="tr mono" style="color:var(--ac)">${fKRW(confirmedSpend)}</td><td></td>
-      </tr>
-      ${waitingSpend>0?`<tr><td colspan="2" style="color:var(--warn)">+ 구매대기</td><td></td><td class="tr mono" style="color:var(--warn)">${fKRW(waitingSpend)}</td><td></td></tr>`:''}
-    </tbody></table>
   </div>`;
 }
+
+function toggleSpendCard(sid){
+  const detail=document.getElementById('scd-'+sid);
+  const card=document.getElementById('sc-'+sid);
+  if(!detail||!card)return;
+  const isOpen=detail.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.spend-card-detail.open').forEach(el=>{
+    el.classList.remove('open');
+    const c=el.closest('.spend-card');
+    if(c){c.style.borderColor='';c.querySelector('.spend-card-amt+div').textContent='탭 ▸';}
+  });
+  if(!isOpen){
+    detail.classList.add('open');
+    card.style.borderColor='var(--ac)';
+    const tapEl=card.querySelector('.spend-card-amt+div');
+    if(tapEl)tapEl.textContent='닫기 ▾';
+  }
+}
+
 
 function showAlbumDetail(albumKey){
   const a=ALBUMS.find(x=>x.k===albumKey);
