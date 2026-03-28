@@ -249,6 +249,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 .cal-ev-strip.off{background:rgba(168,85,247,.15);color:var(--pk)}
 .cal-ev-strip.pur{background:rgba(79,126,255,.15);color:var(--ac)}
 .cal-ev-strip.release{background:rgba(123,95,255,.2);color:var(--ac2);font-weight:700;border:1px solid rgba(123,95,255,.3)}
+.cal-ev-strip.delivery{background:rgba(34,197,94,.15);color:var(--ok);font-weight:600;border:1px solid rgba(34,197,94,.3)}
 .cal-detail{background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-top:10px}
 .cal-detail-ev{padding:10px 0;border-bottom:1px solid var(--bd)}
 .cal-detail-ev:last-child{border-bottom:none}
@@ -550,6 +551,7 @@ function toKRW(amt,cur){return Math.round(amt*rate(cur));}
 function getStoreCur(store){return COUNTRIES[store.country]?.cur||'KRW';}
 function isOvs(store){return COUNTRIES[store.country]?.ovs||false;}
 function storePrice(store,albumKey){
+  if(store.priceMode==='nosale') return null;
   if(store.priceMode==='custom'&&store.customPrices?.[albumKey]!=null) return store.customPrices[albumKey];
   return S.countryPrices[store.country]?.[albumKey]??null;
 }
@@ -875,10 +877,16 @@ function renderDash(){
         const color=d<0?'var(--tx3)':d<=2?'var(--err)':d<=7?'var(--warn)':'var(--ok)';
         const dd=d<0?`${Math.abs(d)}일전`:d===0?'오늘!':'D-'+d;
         const sName=s.name.replace('[음총]','').trim();
+        const isEum=s.name.includes('[음총]');
         const psCnt=S.purchases.filter(p=>p.storeId===s.id).length;
         return `<div class="dl-compact" style="opacity:${d<0?0.5:1}">
           <div style="flex:1;min-width:0;overflow:hidden;cursor:pointer" onclick="showStoreInfoPopup('${s.id}')">
-            <div class="dl-compact-name" title="${sName}" style="text-decoration:underline dotted;text-underline-offset:3px">${sName}</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              <div class="dl-compact-name" title="${sName}" style="text-decoration:underline dotted;text-underline-offset:3px">${sName}</div>
+              ${isEum?`<span class="bx bx-plt2" style="font-size:9px;padding:1px 5px">🎵음총</span>`:''}
+              ${s.unpoPerk?`<span class="bx bx-pk" style="font-size:9px;padding:1px 5px">⭐미공포</span>`:''}
+              ${s.videocall?`<span class="bx" style="font-size:9px;padding:1px 5px;background:rgba(79,126,255,.1);color:var(--ac);border:1px solid var(--ac)">📹영통</span>`:''}
+            </div>
             ${distName(s.distId)?`<span class="bx bx-plt" style="font-size:9px">🏷 ${distName(s.distId)}</span>`:''}
           </div>
           <div class="dl-compact-date">${s.purchaseEndTxt||(s.purchaseEnd?s.purchaseEnd.slice(5,10):'')}</div>
@@ -932,66 +940,6 @@ function showAlbumDetail(albumKey){
   }).join('');
   const total=rows.reduce((s,p)=>{const it=p.items.find(i=>i.type===albumKey);return s+(it?.qty||0);},0);
   openM(`${a?.lb} — 총 ${total}장`,html);
-  document.getElementById('m-foot').innerHTML=`<button class="btn btn-s" onclick="closeM()">닫기</button>`;
-}
-
-function toggleStoreDet(sid){
-  const row=document.getElementById(`sdet-${sid}`);
-  const arr=document.getElementById(`arr-${sid}`);
-  if(!row)return;
-  const was=row.style.display!=='none';
-  document.querySelectorAll('[id^="sdet-"]').forEach(r=>r.style.display='none');
-  document.querySelectorAll('[id^="arr-"]').forEach(a=>{if(a)a.textContent='▸';});
-  if(!was){row.style.display='';if(arr)arr.textContent='▾';}
-}
-function buildStoreDet(sid){
-  const store=S.stores.find(s=>s.id===sid);
-  const ps=S.purchases.filter(p=>p.storeId===sid);
-  if(!ps.length)return '<div style="color:var(--tx3)">구매 기록 없음</div>';
-  return ps.map(p=>{
-    const t=calcTotal(p);const si=STATUSES.find(s=>s.k===(p.status||'waiting'));
-    const items=(p.items||[]).filter(i=>i.qty>0).map(i=>ALBUMS.find(a=>a.k===i.type)?.lb+' ×'+i.qty).join(', ')||'—';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap">
-      <span class="bx ${si?.cls||''}">${si?.lb||'?'}</span>
-      <span style="flex:1;color:var(--tx2);font-size:13px">${items}</span>
-      ${p.owner?`<span class="bx bx-prx">👤 ${p.owner}</span>`:''}
-      <span class="mono" style="font-weight:700;color:var(--ac)">${fKRW(t)}</span>
-      <button class="btn btn-s btn-xs" onclick="editP('${p.id}')">수정</button>
-    </div>`;
-  }).join('');
-}
-function showStatusDetail(stKey){
-  const st=STATUSES.find(x=>x.k===stKey);
-  let ps;
-  if(stKey==='none'){
-    const withPurch=new Set(S.purchases.map(p=>p.storeId));
-    ps=S.stores.filter(s=>!withPurch.has(s.id)).map(s=>({_isStore:true,store:s}));
-  } else {
-    ps=S.purchases.filter(p=>(p.status||'waiting')===stKey);
-  }
-  if(!ps.length)return;
-  const html=ps.map(p=>{
-    if(p._isStore){
-      const dist=distName(p.store.distId);
-      return `<div style="padding:10px 0;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px">
-        <div style="flex:1"><div style="font-weight:600">${p.store.name.replace("[음총]","").trim()}</div>${dist?`<div style="display:inline-flex"><span class="bx bx-plt" style="font-size:10px;margin-top:2px">🏷 ${dist}</span></div>`:''}</div>
-        <button class="btn btn-p btn-xs" onclick="closeM();addP('${p.store.id}')">+ 추가</button>
-      </div>`;
-    }
-    const store=S.stores.find(x=>x.id===p.storeId);
-    const t=calcTotal(p);
-    const items=(p.items||[]).filter(i=>i.qty>0).map(i=>ALBUMS.find(a=>a.k===i.type)?.lb+' ×'+i.qty).join(', ')||'—';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-bottom:1px solid var(--bd);flex-wrap:wrap">
-      <div style="flex:1">
-        <div style="font-weight:600;font-size:13px">${(store?.name||'?').replace('[음총]','').trim()}<span style="font-size:11px;color:var(--tx2);margin-left:6px">${distName(store?.distId)||''}</span></div>
-        <div style="font-size:13px;color:var(--tx2)">${items}</div>
-        ${p.owner?`<span class="bx bx-prx" style="margin-top:4px">👤 ${p.owner}</span>`:''}
-      </div>
-      <div style="text-align:right"><div class="mono" style="font-weight:700;color:var(--ac)">${fKRW(t)}</div>${p.purchaseDate?`<div style="font-size:11px;color:var(--tx3)">${fDate(p.purchaseDate)}</div>`:''}</div>
-      <button class="btn btn-s btn-xs" onclick="closeM();editP('${p.id}')">수정</button>
-    </div>`;
-  }).join('');
-  openM(st.lb+' ('+ps.length+'건)',html);
   document.getElementById('m-foot').innerHTML=`<button class="btn btn-s" onclick="closeM()">닫기</button>`;
 }
 
@@ -1150,6 +1098,7 @@ function pCard(p,hz){
       ${!ovs&&p.domShip?`<div style="font-size:12px;color:var(--tx2)">🚚 국내배송비 ${fKRW(p.domShip)}</div>`:''}
       ${p.discount?`<div style="font-size:12px;color:var(--ok)">🏷 할인 − ${fKRW(p.discount)}</div>`:''}
       ${p.notes?`<div style="margin-top:6px;font-size:12px;color:var(--tx2)">📝 ${p.notes}</div>`:''}
+      ${p.deliveryDate?`<div style="margin-top:3px;font-size:12px;color:var(--ok);font-weight:500">📦 배송예정: ${p.deliveryDate.slice(5).replace('-','/')}</div>`:''}
       ${p.purchaseDate?`<div style="margin-top:3px;font-size:11px;color:var(--tx3)">${fDate(p.purchaseDate)}</div>`:''}
     </div>
   </div>`;
@@ -1217,6 +1166,10 @@ function renderCal(){
       const store=S.stores.find(s=>s.id===p.storeId);
       addEv(p.purchaseDate.slice(0,10),{type:'pur',store,purchaseId:p.id,label:store?.name||'?'});
     }
+    if(p.deliveryDate){
+      const store=S.stores.find(s=>s.id===p.storeId);
+      addEv(p.deliveryDate,{type:'delivery',store,purchaseId:p.id,label:(store?.name||'?').replace('[음총]','').trim()});
+    }
   });
   // Fixed release dates (always shown)
   addEv('2026-04-13',{type:'release',label:'DIGITAL RELEASE',color:'var(--ac2)',store:null,fixed:true});
@@ -1251,8 +1204,8 @@ function renderCal(){
         ddayLabel=diffDays===0?'D-Day':`D-${diffDays}`;
         // Apr 13 = D-7 (digital release)
         if(diffDays===7) chodongCls='chodong-digital';
-        // Apr 14 = D-6 (album release)
-        else if(diffDays===6) chodongCls='chodong-album';
+        // Apr 14 = D-6 (album release) — same highlight style as Apr 13
+        else if(diffDays===6) chodongCls='chodong-digital';
         // Apr 20 = D-Day
         else if(diffDays===0) chodongCls='chodong-dday';
         // Apr 15~19 = 초동 기간
@@ -1266,7 +1219,7 @@ function renderCal(){
     const displayEvs=[...releaseEvs,...otherEvs].slice(0,2);
     const strips=displayEvs.map(ev=>{
       const shortName=ev.label.length>7?ev.label.slice(0,7)+'…':ev.label;
-      const pfx=ev.type==='dl'?'⏰':ev.type==='off'?'📍':ev.type==='release'?'🎵':'✓';
+      const pfx=ev.type==='dl'?'⏰':ev.type==='off'?'📍':ev.type==='release'?'🎵':ev.type==='delivery'?'📦':'✓';
       return `<div class="cal-ev-strip ${ev.type}">${pfx} ${shortName}</div>`;
     }).join('');
     const more=evs.length>2?`<div style="font-size:8px;color:var(--tx3)">+${evs.length-2}</div>`:'';
@@ -1287,7 +1240,7 @@ function renderCal(){
   const dayEvs=S.calDay&&evMap[S.calDay];
   let detailHtml='';
   if(dayEvs){
-    const grouped={dl:[],off:[],pur:[],release:[]};
+    const grouped={dl:[],off:[],pur:[],release:[],delivery:[]};
     dayEvs.forEach(ev=>{const k=ev.type;if(grouped[k])grouped[k].push(ev);});
 
     detailHtml=`<div class="cal-detail">
@@ -1363,9 +1316,29 @@ function renderCal(){
           const si=STATUSES.find(s=>s.k===(p.status||'waiting'));
           const items=(p.items||[]).filter(i=>i.qty>0).map(i=>ALBUMS.find(a=>a.k===i.type)?.lb+' ×'+i.qty).join(', ')||'—';
           return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;flex-wrap:wrap;font-size:13px">
-            <span style="flex:1">${ev.store?.name||'?'} · ${items}</span>
+            <span style="flex:1">${ev.store?.name?.replace('[음총]','').trim()||'?'} · ${items}</span>
             <span class="bx ${si?.cls||''}" style="font-size:10px">${si?.lb}</span>
             <span class="mono">${fKRW(t)}</span>
+            <button class="btn btn-s btn-xs" onclick="editP('${p.id}')">수정</button>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    // Delivery records
+    if(grouped.delivery.length){
+      detailHtml+=`<div class="cal-detail-ev">
+        <div class="cal-detail-head">
+          <div class="cal-ev-dot" style="width:8px;height:8px;border-radius:50%;background:var(--ok);flex-shrink:0"></div>
+          <div style="font-weight:600;color:var(--ok)">📦 배송예정 (${grouped.delivery.length}건)</div>
+        </div>
+        ${grouped.delivery.map(ev=>{
+          const p=S.purchases.find(x=>x.id===ev.purchaseId);if(!p)return '';
+          const si=STATUSES.find(s=>s.k===(p.status||'waiting'));
+          const items=(p.items||[]).filter(i=>i.qty>0).map(i=>ALBUMS.find(a=>a.k===i.type)?.lb+' ×'+i.qty).join(', ')||'—';
+          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;flex-wrap:wrap;font-size:13px">
+            <span style="flex:1">${ev.label} · ${items}</span>
+            <span class="bx ${si?.cls||''}" style="font-size:10px">${si?.lb}</span>
             <button class="btn btn-s btn-xs" onclick="editP('${p.id}')">수정</button>
           </div>`;
         }).join('')}
@@ -1388,6 +1361,9 @@ function renderCal(){
         <span style="width:7px;height:7px;border-radius:50%;background:var(--ac2);display:inline-block"></span>디지털/앨범발매
       </span>
       <span style="font-size:11px;color:var(--ok)">✓ 구매완료</span>
+      <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--ok)">
+        <span style="width:7px;height:7px;border-radius:2px;background:rgba(34,197,94,.3);border:1px solid var(--ok);display:inline-block"></span>배송예정
+      </span>
       <span style="display:flex;align-items:center;gap:3px;font-size:11px;color:var(--warn)">
         <span style="width:7px;height:7px;border-radius:2px;background:rgba(245,158,11,.4);border:1px solid var(--warn);display:inline-block"></span>초동기간
       </span>
@@ -1486,7 +1462,9 @@ function storeCard(s){
         <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">
           <span class="bx ${ovs?'bx-ovs':'bx-dom'}">${COUNTRIES[s.country]?.lb||s.country}</span>
           ${s.custom?`<span class="bx" style="background:rgba(34,197,94,.1);color:var(--ok)">커스텀</span>`:''}
+          ${s.priceMode==='nosale'?`<span class="bx" style="background:rgba(239,68,68,.1);color:var(--err);border:1px solid var(--err)">🚫 미판매</span>`:''}
           ${s.unpoPerk?`<span class="bx bx-pk">⭐ ${ALBUMS.find(a=>a.k===s.unpoPerk)?.lb||s.unpoPerk} 미공포</span>`:''}
+          ${s.videocall?`<span class="bx" style="background:rgba(79,126,255,.1);color:var(--ac);border:1px solid var(--ac)">📹 영통응모</span>`:''}
           ${s.priceMode==='custom'?`<span class="tag">단가직접입력</span>`:''}
         </div>
       </div>
@@ -1619,7 +1597,10 @@ function showPModal(p,isEdit){
   </div>
   <div class="fr2 fg">
     <div><div class="fl">구매일</div><input type="datetime-local" id="pf-dt" value="${p.purchaseDate||''}"></div>
-    <div><div class="fl">메모</div><input type="text" id="pf-nt" value="${p.notes||''}" placeholder="주문번호 등"></div>
+    <div><div class="fl">📦 배송예정일</div><input type="date" id="pf-dd" value="${p.deliveryDate||''}" placeholder="예: 2026-04-25"></div>
+  </div>
+  <div class="fg">
+    <div class="fl">메모</div><input type="text" id="pf-nt" value="${p.notes||''}" placeholder="주문번호 등">
   </div>`);
 
   document.getElementById('m-foot').innerHTML=`
@@ -1642,7 +1623,7 @@ function _buildStoreList(filter, selStoreId){
 
   // Group stores by base name
   const groups={};
-  const allStores=[...S.stores].sort((a,b)=>{
+  const allStores=[...S.stores].filter(s=>s.priceMode!=='nosale').sort((a,b)=>{
     const ba=_getBaseName(a.name), bb=_getBaseName(b.name);
     const na=a.name.replace('[음총]','').trim(), nb=b.name.replace('[음총]','').trim();
     const cmp=ba.localeCompare(bb,'ko');
@@ -1902,6 +1883,7 @@ function _saveP(){
   p.buyer=document.getElementById('pf-buy')?.value||'';
   p.notes=document.getElementById('pf-nt')?.value||'';
   p.purchaseDate=document.getElementById('pf-dt')?.value||'';
+  p.deliveryDate=document.getElementById('pf-dd')?.value||'';
   p.domShip=parseFloat(document.getElementById('pf-ds')?.value)||0;
   p.discount=parseFloat(document.getElementById('pf-disc')?.value)||0;
   const store=S.stores.find(s=>s.id===sid);
@@ -1939,9 +1921,16 @@ function showStoreM(s,isEdit){
   openM(isEdit?'판매처 수정':'판매처 추가',`
   <div class="fr2 fg">
     <div><div class="fl">판매처명 <span class="req">*</span></div>
-      <input type="text" id="sf-n" value="${s.name||''}" placeholder="예: VLAST SHOP"></div>
+      <input type="text" id="sf-n" value="${s.name?.replace('[음총]','').trim()||''}" placeholder="예: VLAST SHOP"></div>
     <div><div class="fl">🏷 플랫폼 <span style="font-size:10px;color:var(--tx2)">(판매 유통 경로)</span></div>
       <select id="sf-d"><option value="">선택안함</option>${distOpts}</select></div>
+  </div>
+  <div class="fg">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.3);border-radius:var(--r-sm);font-size:13px">
+      <input type="checkbox" id="sf-eum" ${s.name?.includes('[음총]')?'checked':''} style="width:auto">
+      🎵 음원총판(음총) 연계 판매처
+      <span style="font-size:11px;color:var(--tx2);margin-left:4px">— 체크 시 [음총] 태그 자동 적용</span>
+    </label>
   </div>
   <div class="fr2 fg">
     <div><div class="fl">국가 / 통화</div>
@@ -1951,14 +1940,18 @@ function showStoreM(s,isEdit){
   </div>
   <div class="fg">
     <div class="fl">단가 설정</div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1px solid var(--bd);border-radius:var(--r-sm)">
         <input type="radio" name="pm" value="country" ${(s.priceMode||'country')==='country'?'checked':''} onchange="_updSF()"> 국가 기준 단가
       </label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1px solid var(--bd);border-radius:var(--r-sm)">
         <input type="radio" name="pm" value="custom" ${s.priceMode==='custom'?'checked':''} onchange="_updSF()"> 직접 입력
       </label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1px solid var(--err);border-radius:var(--r-sm);background:rgba(239,68,68,.06)">
+        <input type="radio" name="pm" value="nosale" ${s.priceMode==='nosale'?'checked':''} onchange="_updSF()"> <span style="color:var(--err)">미판매</span>
+      </label>
     </div>
+    <div class="fn" id="sf-nosale-hint" style="${s.priceMode==='nosale'?'':'display:none'}color:var(--err)">⚠ 미판매 판매처는 구매기록 추가 목록에 표시되지 않습니다.</div>
   </div>
   <div id="sf-cp"></div>
   <div class="fr2 fg">
@@ -1991,32 +1984,62 @@ function showStoreM(s,isEdit){
     <div><div class="fl">기본 해외내배송 (현지통화)</div><input type="number" id="sf-os2" value="${s.defOvsShip||0}"></div>
   </div>
   <div class="fg"><div class="fl">구매 URL</div><input type="url" id="sf-u" value="${s.url||''}" placeholder="https://..."></div>
+  <div style="background:rgba(79,126,255,.08);border:1px solid rgba(79,126,255,.25);border-radius:var(--r-sm);padding:12px;margin-bottom:10px">
+    <div style="font-weight:600;color:var(--ac);margin-bottom:8px;font-size:13px">📹 영상통화 응모</div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="sf-vc" ${s.videocall?'checked':''} style="width:auto">
+        이 판매처는 영상통화 응모 대상입니다
+      </label>
+    </div>
+    <div class="fr2 fg" id="sf-vc-detail" style="${s.videocall?'':'display:none'}">
+      <div><div class="fl">응모 기간</div>
+        <input type="text" id="sf-vc-period" value="${s.vcPeriod||''}" placeholder="예: 4/14 ~ 4/20"></div>
+      <div><div class="fl">응모 조건</div>
+        <input type="text" id="sf-vc-cond" value="${s.vcCondition||''}" placeholder="예: 모든 버전 각 1장 이상"></div>
+    </div>
+    <div class="fg" id="sf-vc-note-wrap" style="${s.videocall?'':'display:none'}">
+      <div class="fl">추가 안내</div>
+      <input type="text" id="sf-vc-note" value="${s.vcNote||''}" placeholder="당첨자 발표일 등">
+    </div>
+  </div>
   <div class="fg"><div class="fl">📝 메모 (판매처 관련 참고사항)</div>
     <textarea id="sf-memo" rows="2" placeholder="특이사항, 참고링크 등">${s.memo||''}</textarea></div>`);
   document.getElementById('m-foot').innerHTML=`
     <button class="btn btn-s" onclick="closeM()">취소</button>
     <button class="btn btn-p" onclick="_saveStore(${isEdit})">저장</button>`;
   _updSF();
+  // Toggle videocall detail visibility
+  const vcChk=document.getElementById('sf-vc');
+  if(vcChk) vcChk.addEventListener('change',function(){
+    const show=this.checked;
+    document.getElementById('sf-vc-detail').style.display=show?'':'none';
+    document.getElementById('sf-vc-note-wrap').style.display=show?'':'none';
+  });
 }
 function _updSF(){
   const pm=document.querySelector('input[name="pm"]:checked')?.value||'country';
   const country=document.getElementById('sf-c')?.value||'KR';
   const cur=COUNTRIES[country]?.cur||'KRW';
   const el=document.getElementById('sf-cp');if(!el)return;
+  const hint=document.getElementById('sf-nosale-hint');
+  if(hint)hint.style.display=pm==='nosale'?'':'none';
   const s=window._es||{};
   if(pm==='custom'){
     el.innerHTML=`<div class="card" style="margin-bottom:12px">
       <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px">직접 입력 단가 (${cur})</div>
       <div class="g4 grid">${ALBUMS.map(a=>`<div><div class="fl">${a.lb}</div>
-        <input type="number" step="0.01" id="sc-${a.k}" value="${s.customPrices?.[a.k]??''}" placeholder="국가기준"></div>`).join('')}
+        <input type="number" step="0.01" id="sc-${a.k}" value="${s.customPrices?.[a.k]??''}" placeholder="국가기준 / 빈칸=미판매"></div>`).join('')}
       </div>
     </div>`;
   } else { el.innerHTML=''; }
 }
 function _saveStore(isEdit){
   const s=window._es;
-  s.name=document.getElementById('sf-n')?.value?.trim();
-  if(!s.name){toast('판매처명 입력 필요','warn');return;}
+  const baseName=document.getElementById('sf-n')?.value?.trim();
+  if(!baseName){toast('판매처명 입력 필요','warn');return;}
+  const isEum=document.getElementById('sf-eum')?.checked||false;
+  s.name=isEum?`[음총] ${baseName}`:baseName;
   s.distId=document.getElementById('sf-d')?.value||'';
   s.country=document.getElementById('sf-c')?.value||'KR';
   s.unpoPerk=document.getElementById('sf-pk')?.value||'';
@@ -2037,6 +2060,10 @@ function _saveStore(isEdit){
   s.defDomShip=parseFloat(document.getElementById('sf-ds')?.value)||0;
   s.defOvsShip=parseFloat(document.getElementById('sf-os2')?.value)||0;
   s.url=document.getElementById('sf-u')?.value||'';
+  s.videocall=document.getElementById('sf-vc')?.checked||false;
+  s.vcPeriod=s.videocall?(document.getElementById('sf-vc-period')?.value||''):'';
+  s.vcCondition=s.videocall?(document.getElementById('sf-vc-cond')?.value||''):'';
+  s.vcNote=s.videocall?(document.getElementById('sf-vc-note')?.value||''):'';
   s.memo=document.getElementById('sf-memo')?.value||'';
   s.custom=true;
   if(!isEdit){s.id='cs'+Date.now();S.stores.push(s);}
@@ -2182,6 +2209,21 @@ function openDataMgr(){
 
 // ── UPDATE LOG ──
 const UPDATE_LOG = [
+  { date:'2026-03-28', title:'v1.7', items:[
+    '버그 수정: UPDATE_LOG 구조 오류로 JS 전체 파싱 실패하던 문제 수정',
+    '버그 수정: toggleStoreDet/buildStoreDet/showStatusDetail 함수 중복 정의 제거',
+    '버그 수정: 미판매(nosale) 판매처의 storePrice가 국가기준가 반환하던 문제 수정',
+    '판매처: 영상통화 응모 여부 체크박스 + 응모기간/조건/안내 입력 필드 추가',
+    '마감일 목록 / 판매처 팝업 / 판매처 카드에 📹영통 배지 표시',
+  ]},
+  { date:'2026-03-28', title:'v1.6', items:[
+    '판매처 추가/수정: 음총(음원총판) 체크박스 추가 — 체크 시 [음총] 태그 자동 적용',
+    '판매처 단가 설정에 "미판매" 옵션 추가 — 구매기록 판매처 목록에서 자동 제외',
+    '구매기록: 배송예정일 입력 필드 추가, 구매카드에 표시',
+    '구매 마감일 목록: 음총(🎵음총), 미공포(⭐미공포) 배지 표시',
+    '캘린더: 4/14 표기 양식 4/13과 동일하게 (보라색 하이라이트)',
+    '캘린더: 배송예정일 📦 초록 스트립 표시 + 날짜 상세 패널에 배송예정 섹션 추가',
+  ]},
   { date:'2026-03-28', title:'v1.5', items:[
     'VLAST SHOP 등 만료된 마감일: 기본값 "진행중만" 으로 변경',
     'dDays 버그 수정: Math.ceil 오류로 만료 직후도 "오늘!"로 표시되던 문제 해결',
@@ -2269,6 +2311,7 @@ function showStoreInfoPopup(sid){
     ${dist?`<span class="bx bx-plt">🏷 ${dist}</span>`:''}
     ${isEum?`<span class="bx bx-plt2">🎵 음총</span>`:''}
     ${s.unpoPerk?`<span class="bx bx-pk">⭐ ${ALBUMS.find(a=>a.k===s.unpoPerk)?.lb} 미공포</span>`:''}
+    ${s.videocall?`<span class="bx" style="background:rgba(79,126,255,.1);color:var(--ac);border:1px solid var(--ac)">📹 영통응모</span>`:''}
     ${s.priceMode==='custom'?`<span class="tag">단가직접입력</span>`:''}
   </div>
 
@@ -2304,6 +2347,14 @@ function showStoreInfoPopup(sid){
   </div>`:'' }
 
   ${s.memo?`<div style="background:var(--sur2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--tx2)">📝 ${s.memo}</div>`:''}
+
+  ${s.videocall?`
+  <div style="background:rgba(79,126,255,.08);border:1px solid rgba(79,126,255,.3);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px;font-size:13px">
+    <div style="color:var(--ac);font-weight:600;margin-bottom:4px">📹 영상통화 응모 대상</div>
+    ${s.vcPeriod?`<div style="color:var(--tx2)">🗓 응모기간: ${s.vcPeriod}</div>`:''}
+    ${s.vcCondition?`<div style="color:var(--tx2)">✅ 조건: ${s.vcCondition}</div>`:''}
+    ${s.vcNote?`<div style="color:var(--tx2);margin-top:3px">${s.vcNote}</div>`:''}
+  </div>`:'' }
 
   ${ps.length?`
   <div>
