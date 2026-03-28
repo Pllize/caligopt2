@@ -1597,7 +1597,12 @@ function showPModal(p,isEdit){
   </div>
   <div class="fr2 fg">
     <div><div class="fl">구매일</div><input type="datetime-local" id="pf-dt" value="${p.purchaseDate||''}"></div>
-    <div><div class="fl">📦 배송예정일</div><input type="date" id="pf-dd" value="${p.deliveryDate||''}" placeholder="예: 2026-04-25"></div>
+    <div><div class="fl">📦 배송예정일</div>
+      <input type="date" id="pf-dd" value="${p.deliveryDate||''}" placeholder="예: 2026-04-25"
+        oninput="this.dataset.manual='1'"
+        ${p.deliveryDate?'data-manual="1"':'data-manual="0"'}>
+      <div class="fn" style="color:var(--tx3)">판매처 기본값 자동 입력 · 수정 시 직접 입력값 사용</div>
+    </div>
   </div>
   <div class="fg">
     <div class="fl">메모</div><input type="text" id="pf-nt" value="${p.notes||''}" placeholder="주문번호 등">
@@ -1720,7 +1725,14 @@ function _selPStore(sid){
     if(txt)txt.style.fontWeight=isSel?700:txt.id?.includes('sub')?400:500;
   });
   const store=S.stores.find(s=>s.id===sid);
-  if(store) _showPlatRow(store);
+  if(store){
+    _showPlatRow(store);
+    // Auto-fill delivery date from store default if not manually set
+    const ddEl=document.getElementById('pf-dd');
+    if(ddEl&&ddEl.dataset.manual!=='1'&&store.defDeliveryDate){
+      ddEl.value=store.defDeliveryDate;
+    }
+  }
   _updPForm();
 }
 
@@ -1932,6 +1944,13 @@ function showStoreM(s,isEdit){
       <span style="font-size:11px;color:var(--tx2);margin-left:4px">— 체크 시 [음총] 태그 자동 적용</span>
     </label>
   </div>
+  <div class="fg">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:rgba(79,126,255,.08);border:1px solid rgba(79,126,255,.25);border-radius:var(--r-sm);font-size:13px">
+      <input type="checkbox" id="sf-vc" ${s.videocall?'checked':''} style="width:auto">
+      📹 영상통화 응모 대상 판매처
+      <span style="font-size:11px;color:var(--tx2);margin-left:4px">— 체크 시 📹 배지 표시</span>
+    </label>
+  </div>
   <div class="fr2 fg">
     <div><div class="fl">국가 / 통화</div>
       <select id="sf-c" onchange="_updSF()">${cntOpts}</select></div>
@@ -1945,21 +1964,22 @@ function showStoreM(s,isEdit){
         <input type="radio" name="pm" value="country" ${(s.priceMode||'country')==='country'?'checked':''} onchange="_updSF()"> 국가 기준 단가
       </label>
       <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1px solid var(--bd);border-radius:var(--r-sm)">
-        <input type="radio" name="pm" value="custom" ${s.priceMode==='custom'?'checked':''} onchange="_updSF()"> 직접 입력
-      </label>
-      <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;border:1px solid var(--err);border-radius:var(--r-sm);background:rgba(239,68,68,.06)">
-        <input type="radio" name="pm" value="nosale" ${s.priceMode==='nosale'?'checked':''} onchange="_updSF()"> <span style="color:var(--err)">미판매</span>
+        <input type="radio" name="pm" value="custom" ${(s.priceMode==='custom'||s.priceMode==='nosale')?'checked':''} onchange="_updSF()"> 직접 입력 <span style="font-size:10px;color:var(--tx2)">(미판매 앨범은 체크 해제)</span>
       </label>
     </div>
-    <div class="fn" id="sf-nosale-hint" style="${s.priceMode==='nosale'?'':'display:none'}color:var(--err)">⚠ 미판매 판매처는 구매기록 추가 목록에 표시되지 않습니다.</div>
   </div>
   <div id="sf-cp"></div>
   <div class="fr2 fg">
     <div><div class="fl">구매 시작일</div><input type="datetime-local" id="sf-s" value="${s.purchaseStart||''}"></div>
     <div><div class="fl">구매 마감일</div><input type="datetime-local" id="sf-e" value="${s.purchaseEnd||''}"></div>
   </div>
-  <div class="fg"><div class="fl">마감일 텍스트 (날짜 대신 표시)</div>
-    <input type="text" id="sf-et" value="${s.purchaseEndTxt||''}" placeholder="예: 특전 소진시까지"></div>
+  <div class="fr2 fg">
+    <div><div class="fl">마감일 텍스트 (날짜 대신 표시)</div>
+      <input type="text" id="sf-et" value="${s.purchaseEndTxt||''}" placeholder="예: 특전 소진시까지"></div>
+    <div><div class="fl">📦 배송예정일 (기본값)</div>
+      <input type="date" id="sf-dd" value="${s.defDeliveryDate||''}" placeholder="YYYY-MM-DD">
+      <div class="fn">구매기록 추가 시 자동 입력됩니다</div></div>
+  </div>
   <div style="background:var(--pk-g);border:1px solid rgba(168,85,247,.2);border-radius:var(--r-sm);padding:12px;margin-bottom:10px">
     <div style="font-weight:600;color:var(--pk);margin-bottom:8px;font-size:13px">📍 오프라인 이벤트</div>
     <div class="fr2 fg">
@@ -1984,13 +2004,6 @@ function showStoreM(s,isEdit){
     <div><div class="fl">기본 해외내배송 (현지통화)</div><input type="number" id="sf-os2" value="${s.defOvsShip||0}"></div>
   </div>
   <div class="fg"><div class="fl">구매 URL</div><input type="url" id="sf-u" value="${s.url||''}" placeholder="https://..."></div>
-  <div class="fg">
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:rgba(79,126,255,.08);border:1px solid rgba(79,126,255,.25);border-radius:var(--r-sm);font-size:13px">
-      <input type="checkbox" id="sf-vc" ${s.videocall?'checked':''} style="width:auto">
-      📹 영상통화 응모 대상 판매처
-      <span style="font-size:11px;color:var(--tx2);margin-left:4px">— 체크 시 📹 배지 표시</span>
-    </label>
-  </div>
   <div class="fg"><div class="fl">📝 메모 (판매처 관련 참고사항)</div>
     <textarea id="sf-memo" rows="2" placeholder="특이사항, 참고링크 등">${s.memo||''}</textarea></div>`);
   document.getElementById('m-foot').innerHTML=`
@@ -2003,8 +2016,6 @@ function _updSF(){
   const country=document.getElementById('sf-c')?.value||'KR';
   const cur=COUNTRIES[country]?.cur||'KRW';
   const el=document.getElementById('sf-cp');if(!el)return;
-  const hint=document.getElementById('sf-nosale-hint');
-  if(hint)hint.style.display=pm==='nosale'?'':'none';
   const s=window._es||{};
   if(pm==='custom'){
     el.innerHTML=`<div class="card" style="margin-bottom:12px">
@@ -2047,6 +2058,8 @@ function _saveStore(isEdit){
   s.country=document.getElementById('sf-c')?.value||'KR';
   s.unpoPerk=document.getElementById('sf-pk')?.value||'';
   s.priceMode=document.querySelector('input[name="pm"]:checked')?.value||'country';
+  // nosale is legacy - migrate to custom with all null
+  if(s.priceMode==='nosale') s.priceMode='custom';
   s.customPrices={};
   if(s.priceMode==='custom'){
     ALBUMS.forEach(a=>{
@@ -2059,6 +2072,7 @@ function _saveStore(isEdit){
   s.purchaseStart=document.getElementById('sf-s')?.value||'';
   s.purchaseEnd=document.getElementById('sf-e')?.value||'';
   s.purchaseEndTxt=document.getElementById('sf-et')?.value||'';
+  s.defDeliveryDate=document.getElementById('sf-dd')?.value||'';
   s.offlineStart=document.getElementById('sf-os')?.value||'';
   s.offlineEnd=document.getElementById('sf-oe')?.value||'';
   s.offlineHours=document.getElementById('sf-oh')?.value||'';
@@ -2184,7 +2198,6 @@ function renderRatePopup(){
   }).join('')}
   <div style="font-size:10px;color:var(--tx3);margin-top:6px">업데이트: ${upd}</div>`;
 }
-function renderRateRow(){} // no-op, popup used instead
 
 // ── DATA MANAGER ──
 function openDataMgr(){
@@ -2214,66 +2227,47 @@ function openDataMgr(){
 
 // ── UPDATE LOG ──
 const UPDATE_LOG = [
+  { date:'2026-03-28', title:'v1.9', items:[
+    '판매처 폼: 미판매 라디오 제거 → 직접입력 앨범별 체크로 통합',
+    '영상통화 체크박스 → 음총 바로 아래로 이동',
+    '판매처에 배송예정일(기본값) 추가 / 구매기록 추가 시 자동 연동',
+  ]},
   { date:'2026-03-28', title:'v1.8', items:[
-    '구매 마감일: 플랫폼 배지 옆에 🎵음총·⭐미공포·📹영통 배지 인라인 표시',
-    '영상통화 응모: 체크박스 하나로 단순화 (음총과 동일 스타일)',
-    '직접 입력 단가: 각 앨범별 판매여부 체크박스 — 해제 시 미판매(null)',
+    '구매 마감일: 플랫폼·음총·미공포·영통 배지 한 줄 표시',
+    '직접 입력 단가: 앨범별 판매여부 체크박스',
   ]},
   { date:'2026-03-28', title:'v1.7', items:[
-    '버그 수정: UPDATE_LOG 구조 오류로 JS 파싱 실패하던 문제',
-    '버그 수정: 함수 중복 정의(toggleStoreDet 등) 제거',
-    '버그 수정: nosale 판매처 storePrice null 반환',
-    '판매처: 영상통화 응모 체크박스 + 📹영통 배지',
+    'JS 파싱 버그 수정 (UPDATE_LOG 구조 / 함수 중복)',
+    'nosale storePrice null 반환 수정',
+    '판매처 📹영통 배지 추가',
   ]},
   { date:'2026-03-28', title:'v1.6', items:[
-    '판매처 추가/수정: 음총 체크박스 — [음총] 태그 자동 적용',
-    '판매처 단가: 미판매 옵션 추가 — 구매기록 목록에서 자동 제외',
-    '구매기록: 배송예정일 입력 + 구매카드 표시',
-    '구매 마감일 목록: 음총·미공포·영통 배지 표시',
-    '캘린더: 4/14 보라색 강조, 배송예정일 📦 표시',
+    '판매처: 음총 체크박스, 미판매 옵션, 배송예정일 캘린더 표시',
+    '구매기록: 배송예정일 입력 필드',
+    '구매 마감일: 음총·미공포·영통 배지',
   ]},
   { date:'2026-03-28', title:'v1.5', items:[
-    'VLAST SHOP 등 만료 마감일 기본값 "진행중만"',
-    'dDays 버그 수정: 만료 직후 "오늘!"로 표시되던 문제',
-    '앨범별 구매수량 카드 판매처별 지출 위로 이동',
-    '구매기록 폼: 국내 판매처도 합계 실시간 표시',
-    '타워레코드/HMV (공구플랫폼): ID PASS 24,412원',
-    '캘린더 초동기간 하이라이트 + 오늘 날짜 기본 선택',
+    'VLAST SHOP 만료 버그(dDays) 수정',
+    '앨범별 구매수량 카드 위치 변경',
+    '타워레코드/HMV 공구플랫폼 단가 수정',
+    '캘린더 초동기간 하이라이트 / 오늘날짜 기본선택',
   ]},
   { date:'2026-03-28', title:'v1.4', items:[
-    '뮤직플랜트 판매처 추가 (INVENTORY 미공포 추첨)',
-    '대시보드 구매 마감일: 전체/진행중만 토글',
-    '대시보드 마감일 리스트 스크롤 (max 200px)',
-    '앨범별 수량을 마감일 아래 2×2 그리드 카드로 변경',
-    '모바일 하단 푸터 고정 표시',
+    '뮤직플랜트 판매처 추가',
+    '마감일 토글·스크롤 개편',
   ]},
   { date:'2026-03-27', title:'v1.3', items:[
-    '판매처 선택: 국가 → 플랫폼별 그룹 → 판매처 순서',
-    '구매기록에 할인금액 입력 기능 추가',
-    '구매 마감일 판매처명 클릭 시 상세정보 팝업',
-    '캘린더: 초동 D-Day 카운트다운 (4/20 기준)',
-    '캘린더: 구매완료 표시를 판매처 기준으로 변경',
+    '판매처 선택 그룹 개편',
+    '할인금액 입력 / 마감일 팝업',
+    '캘린더 D-Day 카운트다운',
   ]},
   { date:'2026-03-27', title:'v1.2', items:[
-    '24개 판매처 / 18개 플랫폼 데이터 업데이트',
-    '모바일 스크롤 오류 수정 (100svh 적용)',
-    '판매처별 지출을 카드 형태로 개편',
-    '구매현황 통계 간소화',
+    '24개 판매처 업데이트 / 모바일 스크롤 수정',
   ]},
   { date:'2026-03-26', title:'v1.1', items:[
-    '관리탭 비밀번호 보호 (⚙ → 비밀번호 1234)',
-    '캘린더에 온라인/오프라인 토글',
-    '4월 13일 디지털 발매 / 4월 14일 앨범 발매 고정 이벤트',
-    '유통사 → 플랫폼 명칭 변경',
-    '[음총] 아이콘 표기 추가',
-    '💾 데이터 관리 팝업',
+    '관리탭 비밀번호 / 캘린더 토글 / [음총] 표기',
   ]},
-  { date:'2026-03-25', title:'v1.0', items:[
-    '초기 출시',
-    '14개 판매처 / 4개국 환율 자동',
-    '대시보드, 구매기록, 캘린더, 관리 4탭 구성',
-    '내보내기 / 불러오기 (JSON)',
-  ]},
+  { date:'2026-03-25', title:'v1.0', items:['초기 출시']},
 ];
 
 function showUpdateLog(){
