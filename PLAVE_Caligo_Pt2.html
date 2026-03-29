@@ -553,7 +553,7 @@ let S = {
   filterStatus:'', hideZero:false, purchView:'list',
   calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
   calDay: null,
-  sortBy:'date', sortDir:'desc', sortStore:'', infoSub:'matrix', infoSort:'name', unpoData:JSON.parse(JSON.stringify(INIT_UNPO_DATA)), showProxyAlb:false,
+  sortBy:'date', sortDir:'desc', sortStore:'', infoSub:'matrix', infoSort:'name', infoUnpoFilter:'all', unpoData:JSON.parse(JSON.stringify(INIT_UNPO_DATA)), showProxyAlb:false, schedIdx:0,
   adminUnlocked:false,
   calShowOnline:true, calShowOffline:true,
   hideExpired:true,
@@ -931,23 +931,27 @@ function renderDash(){
 
   </div>
 
-  <!-- ② SCHEDULE: next upcoming event -->
+  <!-- ② SCHEDULE: tap to cycle all upcoming -->
   ${(()=>{
-    const today=new Date(); today.setHours(0,0,0,0);
+    const today=new Date();today.setHours(0,0,0,0);
     const upcoming=SCHEDULE.filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date));
-    const next=upcoming[0]; if(!next) return '';
-    const d=Math.round((new Date(next.date)-today)/86400000);
-    const isImp=next.important;
+    if(!upcoming.length)return '';
+    const si=Math.min(S.schedIdx||0,upcoming.length-1);
+    const ev=upcoming[si];
+    const d=Math.round((new Date(ev.date)-today)/86400000);
+    const isImp=ev.important;
     const dStr=d===0?'오늘!':d===1?'내일':'D-'+d;
     const color=isImp?'var(--ac2)':d<=3?'var(--err)':d<=7?'var(--warn)':'var(--ac)';
-    return `<div style="background:${isImp?'rgba(123,95,255,.12)':'var(--sur2)'};border:${isImp?'2px solid var(--ac2)':'1px solid var(--bd)'};border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="flex:1">
-        <div style="font-size:10px;color:var(--tx2);margin-bottom:2px">📅 다음 일정</div>
-        <div style="font-size:14px;font-weight:700;color:${color}">${isImp?'🎵 ':''}${next.label}</div>
-        ${next.time?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">${next.time}</div>`:''}
-        <div style="font-size:11px;color:var(--tx3);margin-top:1px">${next.date.slice(5).replace('-','/')}</div>
+    return `<div style="background:${isImp?'rgba(123,95,255,.12)':'var(--sur2)'};border:${isImp?'2px solid var(--ac2)':'1px solid var(--bd)'};border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;cursor:pointer;user-select:none" onclick="S.schedIdx=((S.schedIdx||0)+1)%${upcoming.length};renderDash()">
+      <div style="font-size:10px;color:var(--tx2);margin-bottom:4px">📅 일정 (${si+1}/${upcoming.length}) <span style="color:var(--tx3)">탭 → 다음</span></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:${color}">${isImp?'🎵 ':''}${ev.label}</div>
+          ${ev.time?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">${ev.time}</div>`:''}
+          <div style="font-size:11px;color:var(--tx3);margin-top:1px">${ev.date.slice(5).replace('-','/')}</div>
+        </div>
+        <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk',monospace;color:${color}">${dStr}</div>
       </div>
-      <div style="font-size:22px;font-weight:800;font-family:'Space Grotesk',monospace;color:${color}">${dStr}</div>
     </div>`;
   })()}
 
@@ -2660,7 +2664,7 @@ function renderInfo(){
   mc.innerHTML=`
   <div class="sub-tabs">
     <div class="sub-tab ${sub==='matrix'?'on':''}" onclick="S.infoSub='matrix';renderInfo()">📋 판매처 정보</div>
-    <div class="sub-tab ${sub==='unpo'?'on':''}" onclick="S.infoSub='unpo';renderInfo()">⭐ 미공포 컬렉션</div>
+    <div class="sub-tab ${sub==='unpo'?'on':''}" onclick="S.infoSub='unpo';renderInfo()">⭐ 미공포</div>
   </div>
   <div id="info-sub"></div>`;
 
@@ -2740,8 +2744,11 @@ function renderInfoMatrix(){
         ${nameCell}
         <td style="font-size:11px;color:var(--tx2);white-space:nowrap">
           ${subLabel?`<div style="color:var(--tx);font-size:11px">${subLabel}</div>`:''}
-          ${dist?`<div>${dist}</div>`:'<div>—</div>'}
-          ${isEum?`<span class="bx bx-plt2" style="font-size:9px">🎵음총</span>`:''}
+          <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+            ${dist?`<span>${dist}</span>`:'<span>—</span>'}
+            ${hasPurch?`<span class="bx bx-ord" style="font-size:9px">✓</span>`:''}
+            ${isEum?`<span class="bx bx-plt2" style="font-size:9px">🎵</span>`:''}
+          </div>
         </td>
         <td style="font-size:11px;white-space:nowrap">
           <span style="color:${dcolor}">${deadlineStr}</span>${ddStr}
@@ -2820,7 +2827,7 @@ function renderInfoUnpo(){
           const owned=c.owned||false;
           const clickAttr=interactive?`onclick="_toggleUnpoOwned('${ak}','${bn}',${si},${i})" style="cursor:pointer"`:'';
           return `<div ${clickAttr}>
-          <div style="aspect-ratio:55/85;background:var(--sur2);border:1.5px solid ${owned?'var(--ok)':'var(--bd)'};border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden;${owned?'':'opacity:0.45'}">
+          <div style="aspect-ratio:55/85;background:var(--sur2);border:1.5px solid ${owned?'var(--ac2)':'var(--bd)'};border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden;${owned?'':'opacity:0.45'}">
             ${c.img?`<img src="${c.img}" style="width:100%;height:100%;object-fit:cover">`:`<div style="color:var(--tx3);font-size:14px">?</div>`}
           </div>
           <div style="font-size:9px;color:${owned?'var(--tx2)':'var(--tx3)'};text-align:center;margin-top:2px;font-weight:500">${MEMBERS[i]||i+1}</div>
@@ -2845,19 +2852,19 @@ function renderInfoUnpo(){
       </div>
       <div style="font-size:11px;color:var(--tx2)">${pct}%</div>
     </div>
-    <!-- Progress bar with character images -->
-    <div style="position:relative;display:flex;align-items:center;gap:4px;margin-bottom:6px">
-      <img src="${UNPO_IMG_START}" style="width:32px;height:32px;object-fit:contain;image-rendering:pixelated;flex-shrink:0">
+    <!-- Progress bar: plli runs, TERRY fixed right -->
+    <div style="position:relative;display:flex;align-items:center;gap:6px;margin-bottom:6px;padding-right:42px">
       <div style="flex:1;height:10px;border-radius:5px;background:var(--bd);overflow:visible;position:relative">
-        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--ok),var(--ac));border-radius:5px;transition:width .5s;position:relative">
-          ${pct>=5?`<img src="${UNPO_IMG_END}" style="position:absolute;right:-16px;top:50%;transform:translateY(-50%);width:32px;height:32px;object-fit:contain;image-rendering:pixelated">`:''}
-        </div>
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--ac),var(--pk));border-radius:5px;transition:width .5s"></div>
+        <img src="${UNPO_IMG_START}" style="position:absolute;left:calc(${pct}% - 14px);top:50%;transform:translateY(-50%);width:28px;height:28px;object-fit:contain;image-rendering:pixelated;transition:left .5s;pointer-events:none;z-index:2">
       </div>
+      <img src="${UNPO_IMG_END}" style="position:absolute;right:0;top:50%;transform:translateY(-50%);width:38px;height:38px;object-fit:contain;image-rendering:pixelated">
     </div>
     <div style="font-size:11px;color:var(--tx3);font-style:italic;margin-top:2px">
-      ${pct<30?'플리, 지갑은 괜찮은가요?':pct<60?'이미 돌이킬 수 없는 길을 걷고 있는거 아닐까.':pct<100?'이미 내 자아를 상실했다. 구매를 누르고 있을 뿐.':'모든 미공포 수집 완료 🏆'}
+      ${pct>=100?['🏆 모든 미공포 수집 완료','🏆 100% 달성','🏆 숨겨진 업적까지 전부 클리어','🏆 더 이상 모을 것이 없다 (아마도)'][Math.floor(Math.random()*4)]:['플리, 지갑은 괜찮은가요?','이미 돌이킬 수 없는 길을 걷고 있는 거 아닐까.','이미 내 자아를 상실했다. 구매 본능만 남아있을 뿐','아직은 괜찮은 줄 알았는데... 장바구니가 점점 무거워진다','이번엔 진짜 안 사려고 했는데 결제창이 너무 가까워','하나만 사면 될 줄 알았지, 왜 세트가 되어 있지','손이 먼저 움직이고 뇌는 뒤늦게 합류 중','이건 소비가 아니라 투자야... 아마도','통장 잔고를 보지 않는 법을 배웠다','필요 없다고 생각했는데 이미 필요해짐','고민은 배송만 늦출 뿐이라며 스스로를 설득 중','누가 내 카드로 결제했지? (나였음)','장바구니는 담으라고 있는 거잖아... 그렇지?','이건 마지막일지도 몰라서 또 사는 중','하나만이라는 말은 이제 믿지 않는다','이미 돌아가기엔 너무 많이 와버린 느낌','이 정도면 취미가 아니라 생활이다','카드값은 미래의 내가 해결해주겠지','합리화 스킬이 점점 레벨업 중','어차피 살 거였다는 결론에 도달','사고 나서 이유를 만드는 중','이제는 망설이는 시간도 아깝다'][Math.floor(Math.random()*22)]}
     </div>
   </div>
+  ${(()=>{const f=S.infoUnpoFilter||'all';return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center"><span style="font-size:11px;color:var(--tx2)">보기:</span><span class="chip sm ${f==='all'?'on':''}" onclick="S.infoUnpoFilter='all';renderInfoUnpo()">전체</span><span class="chip sm ${f==='owned'?'on':''}" onclick="S.infoUnpoFilter='owned';renderInfoUnpo()">수집한 것</span><span class="chip sm ${f==='unowned'?'on':''}" onclick="S.infoUnpoFilter='unowned';renderInfoUnpo()">미수집</span></div>`;})()}
   ${albumOrder.map(ak=>{
     const groups=unpoByAlbum[ak];
     const groupKeys=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ko'));
@@ -2868,7 +2875,7 @@ function renderInfoUnpo(){
         <span class="bx bx-pk">⭐ ${aLabel} 미공포</span>
         <span style="font-size:11px;font-weight:400;color:var(--tx2)">${groupKeys.length}개 판매처</span>
       </div>
-      ${groupKeys.map(bn=>{
+      ${groupKeys.filter(bn=>{const sts=getUnpoSets(ak,bn);const hasAny=sts.some(c=>c.some(x=>x.owned));const f=S.infoUnpoFilter||'all';return f==='owned'?hasAny:f==='unowned'?!hasAny:true;}).map(bn=>{
         const stores=groups[bn];
         const anyP=stores.some(s=>hasPurch(s.id));
         const purchStores=stores.filter(s=>hasPurch(s.id));
@@ -2876,7 +2883,7 @@ function renderInfoUnpo(){
         const ownedSlots=sets.reduce((s,c)=>s+c.filter(x=>x.owned).length,0);
         const totalSlots=sets.reduce((s,c)=>s+c.length,0);
         const isComplete=ownedSlots>=totalSlots&&totalSlots>0;
-        return `<div style="background:var(--sur);border:2px solid ${ownedSlots>0?'var(--ok)':'var(--bd)'};border-radius:var(--r);padding:12px 14px;margin-bottom:10px;transition:border-color .2s">
+        return `<div style="background:var(--sur);border:2px solid ${ownedSlots>0?'var(--ac2)':'var(--bd)'};border-radius:var(--r);padding:12px 14px;margin-bottom:10px;transition:border-color .2s">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
             <span style="font-size:13px;font-weight:700">${bn}</span>
             ${stores.map(s=>distName(s.distId)?`<span class="bx bx-plt" style="font-size:10px;cursor:pointer" onclick="event.stopPropagation();showStoreInfoPopup('${s.id}')">🏷 ${distName(s.distId)}</span>`:'').join('')}
