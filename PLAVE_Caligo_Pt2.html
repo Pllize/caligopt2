@@ -769,7 +769,7 @@ function storeFull(store){
 }
 function fmtStoreName(name){
   if(!name)return name;
-  return name.replace('[음총]','<span style="color:var(--info);font-size:11px" title="음원총판">🎵음총</span>');
+  return name.replace('[음총]','<span style="color:var(--info);font-size:11px" title="음원총공팀">🎵음총</span>');
 }
 function storeLabel(store,badge=true){
   if(!store)return '?';
@@ -2174,7 +2174,7 @@ function showStoreM(s,isEdit){
   <div class="fg">
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.3);border-radius:var(--r-sm);font-size:13px">
       <input type="checkbox" id="sf-eum" ${s.name?.includes('[음총]')?'checked':''} style="width:auto">
-      🎵 음원총판(음총) 연계 판매처
+      🎵 음원총공팀 연계 판매처
       <span style="font-size:11px;color:var(--tx2);margin-left:4px">— 체크 시 [음총] 태그 자동 적용</span>
     </label>
   </div>
@@ -2659,12 +2659,12 @@ function getUnpoData(albumKey){ return getUnpoSets(albumKey,'__default__')[0]; }
 
 function renderInfo(){
   const mc=document.getElementById('main');
-  const sub=S.infoSub||'matrix';
+  const sub=S.infoSub||'unpo';
 
   mc.innerHTML=`
   <div class="sub-tabs">
-    <div class="sub-tab ${sub==='matrix'?'on':''}" onclick="S.infoSub='matrix';renderInfo()">📋 판매처 정보</div>
     <div class="sub-tab ${sub==='unpo'?'on':''}" onclick="S.infoSub='unpo';renderInfo()">⭐ 미공포</div>
+    <div class="sub-tab ${sub==='matrix'?'on':''}" onclick="S.infoSub='matrix';renderInfo()">📋 판매처 정보</div>
   </div>
   <div id="info-sub"></div>`;
 
@@ -2744,18 +2744,14 @@ function renderInfoMatrix(){
         ${nameCell}
         <td style="font-size:11px;color:var(--tx2);white-space:nowrap">
           ${subLabel?`<div style="color:var(--tx);font-size:11px">${subLabel}</div>`:''}
-          <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
-            ${dist?`<span>${dist}</span>`:'<span>—</span>'}
-            ${hasPurch?`<span class="bx bx-ord" style="font-size:9px">✓</span>`:''}
-            ${isEum?`<span class="bx bx-plt2" style="font-size:9px">🎵</span>`:''}
-          </div>
+          ${dist?`<span>${dist}</span>`:`<span style="color:var(--tx3)">—</span>`}
         </td>
+        <td style="text-align:center">${hasPurch?`<span class="bx bx-ord" style="font-size:10px">✓</span>`:`<span style="color:var(--tx3);font-size:11px">—</span>`}</td>
         <td style="font-size:11px;white-space:nowrap">
           <span style="color:${dcolor}">${deadlineStr}</span>${ddStr}
         </td>
         <td style="font-size:11px;white-space:nowrap">${perkAlb}</td>
         <td style="text-align:center;font-size:13px">${s.videocall?'📹':'—'}</td>
-        <td style="text-align:center">${hasPurch?'<span class="bx bx-ord" style="font-size:10px">✓</span>':'<span style="color:var(--tx3);font-size:11px">—</span>'}</td>
       </tr>`;
     });
   });
@@ -2765,16 +2761,17 @@ function renderInfoMatrix(){
     <span style="font-size:11px;color:var(--tx2);flex-shrink:0">정렬:</span>
     ${sortBtns.map(b=>`<span class="chip sm ${sort===b.k?'on':''}" onclick="S.infoSort='${b.k}';renderInfoMatrix()">${b.lb}</span>`).join('')}
   </div>
+  <div style="font-size:11px;color:var(--tx2);margin-bottom:6px">🎵 = 음원총공팀 연계 판매처</div>
   <div class="tbl-wrap">
     <table>
       <thead>
         <tr>
           <th style="min-width:80px">판매처</th>
           <th style="min-width:70px">플랫폼</th>
+          <th style="text-align:center;min-width:40px">구매</th>
           <th style="min-width:75px">구매기한</th>
           <th style="min-width:80px">미공포</th>
           <th style="text-align:center;min-width:40px">영통</th>
-          <th style="text-align:center;min-width:40px">구매</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
