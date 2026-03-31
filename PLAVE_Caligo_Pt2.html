@@ -59,7 +59,7 @@ select option{background:var(--sur)}
 
 /* LAYOUT */
 .app{display:flex;flex-direction:column;height:100vh;height:100svh;min-height:-webkit-fill-available}
-.hdr{background:var(--sur);border-bottom:1px solid var(--bd);padding:0 16px;height:52px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:50}
+.hdr{background:var(--sur);border-bottom:1px solid var(--bd);padding:0 16px;height:52px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-shrink:0;z-index:50}
 .hdr-logo{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;background:linear-gradient(135deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
 .rate-row{flex:1;display:flex;gap:6px;justify-content:center;flex-wrap:nowrap;overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none}
 .rate-row::-webkit-scrollbar{display:none}
@@ -423,6 +423,17 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 }
 @media(min-width:361px){#headline-sub{display:block!important}}
 .pcard-waiting{border-left:3px solid var(--warn)!important}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl-wrap table{border-collapse:collapse;min-width:100%}
+.tbl-wrap th:first-child,.tbl-wrap td:first-child{position:sticky;left:0;z-index:2;background:var(--sur)}
+.tbl-wrap tr:hover td:first-child{background:var(--ac-g)}
+.tbl-wrap th:first-child{background:var(--sur2);z-index:3}
+.fab-wrap{position:fixed;bottom:76px;right:16px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.fab{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:opacity .2s,transform .2s}
+.fab:active{transform:scale(.92)}
+.fab-top{background:var(--sur);color:var(--tx2);border:1px solid var(--bd);opacity:0;pointer-events:none;transition:opacity .2s}
+.fab-top.show{opacity:1;pointer-events:auto}
+.fab-add{background:var(--pk);color:#fff}
 </style>
 </head>
 <body>
@@ -495,6 +506,10 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
       <button class="btn btn-p btn-sm" onclick="closeNotice()">확인</button>
     </div>
   </div>
+</div>
+<div class="fab-wrap" id="fab-wrap">
+  <div class="fab fab-top" id="fab-top" onclick="document.getElementById('main').scrollTo({top:0,behavior:'smooth'})" title="맨 위로">↑</div>
+  <div class="fab fab-add" id="fab-add" style="display:none" onclick="addP()" title="구매 추가">＋</div>
 </div>
 <div class="app-footer" id="app-footer">
   <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap">
@@ -594,7 +609,7 @@ let S = {
   filterStatus:'', hideZero:false, purchView:'list',
   calYear: new Date().getFullYear(), calMonth: new Date().getMonth(),
   calDay: null,
-  sortBy:'date', sortDir:'desc', sortStore:'', infoSub:'matrix', infoSort:'name', infoUnpoFilter:'all', unpoData:JSON.parse(JSON.stringify(INIT_UNPO_DATA)), showProxyAlb:false, schedIdx:0,
+  sortBy:'date', sortDir:'desc', sortStore:'', infoSub:'unpo', infoSort:'name', infoUnpoFilter:'all', unpoData:JSON.parse(JSON.stringify(INIT_UNPO_DATA)), showProxyAlb:false, schedIdx:0,
   adminUnlocked:false,
   calShowOnline:true, calShowOffline:true,
   hideExpired:true,
@@ -617,7 +632,7 @@ function _doSave(){
         unpoStripped[ak]={};
         Object.entries(bnMap).forEach(([bn,sets])=>{
           if(!Array.isArray(sets)) return;
-          unpoStripped[ak][bn]=sets.map(set=>{const cards=Array.isArray(set)?set:(set.cards||[]);const note=Array.isArray(set)?'':(set.note||'');return {cards:cards.map(c=>({owned:c.owned||false,note:c.note||''})),note};});
+          unpoStripped[ak][bn]=sets.map(set=>{const cards=Array.isArray(set)?set:(set.cards||[]);const m=Array.isArray(set)?'':(set.memo||set.note||'');return {memo:m,cards:cards.map(c=>({owned:c.owned||false,note:c.note||''}))};});
         });
       });
     }
@@ -636,9 +651,13 @@ function _saveUnpoImages(){
         if(typeof bnMap!=='object'||Array.isArray(bnMap)) return;
         Object.entries(bnMap).forEach(([bn,sets])=>{
           if(!Array.isArray(sets)) return;
-          sets.forEach((cards,si)=>{
+          sets.forEach((set,si)=>{
+            const cards=Array.isArray(set)?set:(set.cards||[]);
             cards.forEach((c,i)=>{
-              const initImg=INIT_UNPO_DATA[ak]?.[bn]?.[si]?.[i]?.img;
+              // Compare against INIT img (handling both flat array and object formats)
+              const initSet=INIT_UNPO_DATA[ak]?.[bn]?.[si];
+              const initCard=Array.isArray(initSet)?initSet[i]:(initSet?.cards?.[i]);
+              const initImg=initCard?.img;
               if(c.img && c.img!==initImg){
                 if(!userImgs[ak]) userImgs[ak]={};
                 if(!userImgs[ak][bn]) userImgs[ak][bn]=[];
@@ -666,14 +685,28 @@ function load(){
   S.ratesAt = "2026-03-26T17:40:18.345Z";
   // Restore only user preferences and purchases from localStorage
   // Always initialize unpoData from INIT first (ensures correct structure)
-  S.unpoData=JSON.parse(JSON.stringify(INIT_UNPO_DATA));
-  // Pre-populate all unpo groups so getUnpoSets creates correct set counts
-  (function _preInitUnpo(){
-    const albumOrder=['PHOTOBOOK','POCAALBUM','ID_PASS','INVENTORY'];
-    albumOrder.forEach(ak=>{
-      Object.keys(UNPO_MULTI_SETS[ak]||{}).forEach(bn=>getUnpoSets(ak,bn));
+  // Deep copy INIT and normalize ALL sets to {cards:[], memo:''} format
+  S.unpoData={};
+  Object.entries(INIT_UNPO_DATA).forEach(([ak,bnMap])=>{
+    S.unpoData[ak]={};
+    Object.entries(bnMap).forEach(([bn,sets])=>{
+      S.unpoData[ak][bn]=sets.map(set=>Array.isArray(set)
+        ?{cards:set.map(c=>({img:c.img||null,note:c.note||'',owned:c.owned||false})),memo:''}
+        :{cards:(set.cards||[]).map(c=>({img:c.img||null,note:c.note||'',owned:c.owned||false})),memo:set.memo||set.note||''});
     });
-  })();
+  });
+  // Pre-populate multi-set groups
+  Object.entries(UNPO_MULTI_SETS).forEach(([ak,bns])=>{
+    if(!S.unpoData[ak]) S.unpoData[ak]={};
+    Object.keys(bns).forEach(bn=>{
+      if(!S.unpoData[ak][bn]){
+        const n=bns[bn]||1;
+        S.unpoData[ak][bn]=Array.from({length:n},()=>_mkSet());
+      } else if(S.unpoData[ak][bn].length < bns[bn]){
+        while(S.unpoData[ak][bn].length < bns[bn]) S.unpoData[ak][bn].push(_mkSet());
+      }
+    });
+  });
   try{
     const raw=localStorage.getItem('plave2_v2');
     if(raw){
@@ -694,16 +727,16 @@ function load(){
           if(!S.unpoData[ak][bn]){
             S.unpoData[ak][bn]=sets.map(s=>{
               const c=Array.isArray(s)?s:(s.cards||[]);
-              return {cards:c.map(x=>({img:null,note:x.note||'',owned:x.owned||false})),note:Array.isArray(s)?'':(s.note||'')};
+              return {cards:c.map(x=>({img:null,note:x.note||'',owned:x.owned||false})),memo:Array.isArray(s)?'':(s.note||'')};
             });
           } else {
             sets.forEach((sv_set,si)=>{
               const sv_cards=Array.isArray(sv_set)?sv_set:(sv_set.cards||[]);
-              const sv_note=Array.isArray(sv_set)?'':(sv_set.note||'');
+              const sv_note=Array.isArray(sv_set)?'':(sv_set.memo||sv_set.note||'');
               if(!S.unpoData[ak][bn][si]){
                 S.unpoData[ak][bn][si]={cards:sv_cards.map(x=>({img:null,note:x.note||'',owned:x.owned||false})),note:sv_note};
               } else {
-                if(sv_note) S.unpoData[ak][bn][si].note=sv_note;
+                if(sv_note) S.unpoData[ak][bn][si].memo=sv_note;
                 const ex=S.unpoData[ak][bn][si];
                 const ex_cards=Array.isArray(ex)?ex:(ex.cards||[]);
                 sv_cards.forEach((c,i)=>{if(ex_cards[i]){ex_cards[i].owned=c.owned||false;ex_cards[i].note=c.note||'';}});
@@ -857,6 +890,18 @@ function go(tab){
 function render(){
   const map={dash:renderDash,purch:renderPurch,cal:renderCal,mgr:renderMgr,info:renderInfo};
   (map[S.tab]||renderDash)();
+  // FAB: show + add button only on purch tab
+  const fabAdd=document.getElementById('fab-add');
+  if(fabAdd) fabAdd.style.display=S.tab==='purch'?'flex':'none';
+  // Scroll listener for ↑ button
+  const mc=document.getElementById('main');
+  if(mc&&!mc._fabListener){
+    mc._fabListener=true;
+    mc.addEventListener('scroll',()=>{
+      const btn=document.getElementById('fab-top');
+      if(btn) btn.classList.toggle('show',mc.scrollTop>200);
+    },{passive:true});
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -1339,23 +1384,27 @@ function pCard(p,hz){
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div class="mono" style="font-weight:700;font-size:16px;color:${isWaiting?'var(--warn)':'var(--ac)'}">${fKRW(t)}</div>
-        ${pt>0?`<div style="font-size:11px;color:var(--warn)">대리 ${fKRW(pt)}</div>`:''}
+        ${pt>0?`<div style="font-size:10px;color:var(--tx3);margin-top:1px">↳ 대리 <span class="mono">${fKRW(pt)}</span></div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:2px;margin-left:4px">
         <button class="iBtn" onclick="editP('${p.id}')" title="수정">✏️</button>
         <button class="iBtn" onclick="delP('${p.id}')" style="color:var(--err)" title="삭제">🗑</button>
       </div>
     </div>
-    ${itemsSummary?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;padding-top:6px;border-top:1px solid var(--bd)">${itemsSummary}</div>`:''}
-    ${proxyQtyTotal>0?`<div style="font-size:11px;color:var(--warn);margin-bottom:4px">↳ 총 ${totalQty}장 중 대리 ${proxyQtyTotal}장 (${fKRW(pt)})</div>`:''}
-    ${ovs?renderOvsCost(p,store,cur):''}
-    <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--tx2);margin-top:${itemsSummary||ovs?4:0}px">
-      ${p.deliveryDate?`<span>📦 ${p.deliveryDate.slice(5).replace('-','/')}</span>`:''}
-      ${!ovs&&p.domShip?`<span>🚚 ${fKRW(p.domShip)}</span>`:''}
-      ${p.discount?`<span style="color:var(--ok)">🏷 -${fKRW(p.discount)}</span>`:''}
-      ${p.notes?`<span>📝 ${p.notes}</span>`:''}
-      ${p.purchaseDate?`<span style="color:var(--tx3)">${fDate(p.purchaseDate)}</span>`:''}
-    </div>
+    ${(itemsSummary||proxyQtyTotal>0||ovs||p.deliveryDate||p.domShip||p.discount||p.notes||p.purchaseDate)?`
+    <div class="pcard-body">
+      ${itemsSummary?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">${itemsSummary}</div>`:''}
+      ${proxyQtyTotal>0?`<div style="font-size:11px;color:var(--tx2);margin-bottom:6px">↳ 대리 ${proxyQtyTotal}장 <span class="mono" style="color:var(--tx3)">(${fKRW(pt)})</span></div>`:''}
+      ${ovs?renderOvsCost(p,store,cur):''}
+      ${(p.deliveryDate||(!ovs&&p.domShip)||p.discount||p.notes||p.purchaseDate)?`
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--tx2);${ovs||proxyQtyTotal>0?'margin-top:6px':''}">
+        ${p.deliveryDate?`<span>📦 ${p.deliveryDate.slice(5).replace('-','/')}</span>`:''}
+        ${!ovs&&p.domShip?`<span>🚚 ${fKRW(p.domShip)}</span>`:''}
+        ${p.discount?`<span style="color:var(--ok)">🏷 -${fKRW(p.discount)}</span>`:''}
+        ${p.notes?`<span>📝 ${p.notes}</span>`:''}
+        ${p.purchaseDate?`<span style="color:var(--tx3)">${fDate(p.purchaseDate)}</span>`:''}
+      </div>`:''}
+    </div>`:''}
   </div>`;
 }
 
@@ -3060,7 +3109,7 @@ function renderMgrUnpo(){
             <div style="font-weight:600;font-size:13px">${bn} <span style="font-size:11px;font-weight:400;color:var(--tx2)">(${stores.map(s=>distName(s.distId)||s.name.replace('[음총]','').trim()).join(', ')})</span></div>
             <button class="btn btn-s btn-sm" onclick="_addUnpoSet('${ak}','${bn}')">+ 세트 추가</button>
           </div>
-          ${sets.map((set,si)=>{const cards=Array.isArray(set)?set:(set.cards||[]);const setNote=Array.isArray(set)?'':(set.note||''); return `
+          ${sets.map((set,si)=>{const cards=Array.isArray(set)?set:(set.cards||[]);const setNote=Array.isArray(set)?'':(set.memo||set.note||''); return `
           <div style="background:var(--sur2);border-radius:var(--r-sm);padding:8px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px">
               <div style="font-size:11px;font-weight:600;color:var(--tx2)">세트 ${si+1}</div>
@@ -3125,7 +3174,7 @@ function _setUnpoImg2(ak,si,idx,inp,bn){
   r.readAsDataURL(inp.files[0]);
 }
 function _setUnpoNote2(ak,si,idx,val,bn){
-  getUnpoSets(ak,bn||'__default__')[si][idx].note=val;save();
+  const set=getUnpoSets(ak,bn||'__default__')[si];const cards=Array.isArray(set)?set:(set.cards||[]);if(cards[idx])cards[idx].note=val;save();
 }
 function _clearUnpoImg2(ak,si,idx,bn){
   getUnpoSets(ak,bn||'__default__')[si][idx].img=null;save();renderMgrUnpo();
