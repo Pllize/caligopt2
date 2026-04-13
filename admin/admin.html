@@ -140,6 +140,32 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
 .dot-none { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--tx3); }
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+#lock-screen {
+  position:fixed; inset:0; background:var(--bg); z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+}
+#lock-screen .lock-box {
+  background:var(--sur); border:1px solid var(--bd2); border-radius:var(--r);
+  padding:40px 36px; width:320px; text-align:center;
+}
+#lock-screen .lock-icon { font-size:40px; margin-bottom:16px; }
+#lock-screen .lock-title { font-size:18px; font-weight:700; color:var(--tx); margin-bottom:6px; }
+#lock-screen .lock-sub { font-size:13px; color:var(--tx3); margin-bottom:24px; }
+#lock-screen input {
+  width:100%; padding:12px 14px; background:var(--sur2);
+  border:1px solid var(--bd2); border-radius:var(--r-sm);
+  color:var(--tx); font-size:18px; text-align:center; letter-spacing:.3em;
+  margin-bottom:12px;
+}
+#lock-screen input:focus { border-color:var(--pk2); outline:none; }
+#lock-screen input.shake {
+  animation:shake .3s ease;
+  border-color:var(--err) !important;
+}
+#lock-screen .lock-error { font-size:12px; color:var(--err); min-height:16px; margin-bottom:12px; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)}
+}
 #save-bar {
   display:none; position:fixed; bottom:0; left:220px; right:0; z-index:50;
   background:var(--sur2); border-top:1px solid var(--bd2);
@@ -153,7 +179,21 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
 </head>
 <body>
 
-<div class="layout">
+<!-- ── 잠금 화면 ── -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Caligo Admin</div>
+    <div class="lock-sub">비밀번호를 입력하세요</div>
+    <input type="password" id="pw-input" placeholder="••••" maxlength="8"
+      onkeydown="if(event.key==='Enter') checkPw()"
+      oninput="document.getElementById('pw-input').classList.remove('shake');document.getElementById('pw-err').textContent=''">
+    <div class="lock-error" id="pw-err"></div>
+    <button class="btn btn-p" style="width:100%" onclick="checkPw()">입력</button>
+  </div>
+</div>
+
+<div class="layout" id="app-layout" style="display:none">
 <!-- ── Sidebar ── -->
 <nav class="sidebar">
   <div class="logo">🌙 Caligo Admin</div>
@@ -520,6 +560,46 @@ const SECTION_LABELS = {
 const MEMBERS_5 = ['bambi','yejun','eunho','hamin','noa'];
 const MEMBERS_6 = [...MEMBERS_5, 'group'];
 const MEMBER_KO  = {bambi:'밤비',yejun:'예준',eunho:'은호',hamin:'하민',noa:'노아',group:'그룹'};
+
+// ═══════════════════════════════════════════════
+// 비밀번호 잠금
+// ═══════════════════════════════════════════════
+const PW_HASH = '155473074372db9d';  // SHA-like simple hash of "0312"
+
+function simpleHash(s) {
+  let h = 0xdeadbeef;
+  for(let i = 0; i < s.length; i++) {
+    h = Math.imul(h ^ s.charCodeAt(i), 0x9e3779b9);
+    h ^= h >>> 16;
+  }
+  return (h >>> 0).toString(16).padStart(8, '0') + ((h * 0x45d9f3b) >>> 0).toString(16).padStart(8, '0');
+}
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if(simpleHash(val) === PW_HASH) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-layout').style.display  = 'grid';
+    document.getElementById('save-bar').style.left = '220px';
+    sessionStorage.setItem('admin_unlocked', '1');
+    init();
+  } else {
+    const inp = document.getElementById('pw-input');
+    const err = document.getElementById('pw-err');
+    inp.value = '';
+    inp.classList.add('shake');
+    err.textContent = '비밀번호가 틀렸습니다';
+    setTimeout(() => inp.classList.remove('shake'), 400);
+  }
+}
+
+// 세션 내 재접속 시 자동 잠금 해제
+if(sessionStorage.getItem('admin_unlocked') === '1') {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-layout').style.display  = 'grid';
+  });
+}
 
 // ═══════════════════════════════════════════════
 // LOAD DATA FROM SIBLING JS FILES
@@ -1268,7 +1348,11 @@ document.querySelectorAll('.modal-bg').forEach(bg => {
 // ═══════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════
-init();
+// 비밀번호 없이 세션 유지된 경우에만 init 자동 실행
+if(sessionStorage.getItem('admin_unlocked') === '1') {
+  init();
+}
+// 아니면 비밀번호 입력 화면이 먼저 뜨고, checkPw() 통과 후 init() 실행
 </script>
 <!-- ── 저장 바 ── -->
 <div id="save-bar">
