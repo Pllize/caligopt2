@@ -564,20 +564,11 @@ const MEMBER_KO  = {bambi:'밤비',yejun:'예준',eunho:'은호',hamin:'하민',
 // ═══════════════════════════════════════════════
 // 비밀번호 잠금
 // ═══════════════════════════════════════════════
-const PW_HASH = '155473074372db9d';  // SHA-like simple hash of "0312"
-
-function simpleHash(s) {
-  let h = 0xdeadbeef;
-  for(let i = 0; i < s.length; i++) {
-    h = Math.imul(h ^ s.charCodeAt(i), 0x9e3779b9);
-    h ^= h >>> 16;
-  }
-  return (h >>> 0).toString(16).padStart(8, '0') + ((h * 0x45d9f3b) >>> 0).toString(16).padStart(8, '0');
-}
+const PW_ENC = 'MDMxMg==';  // btoa("0312")
 
 function checkPw() {
   const val = document.getElementById('pw-input').value;
-  if(simpleHash(val) === PW_HASH) {
+  if(btoa(val) === PW_ENC) {
     document.getElementById('lock-screen').style.display = 'none';
     document.getElementById('app-layout').style.display  = 'grid';
     document.getElementById('save-bar').style.left = '220px';
