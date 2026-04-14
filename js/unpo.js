@@ -122,7 +122,37 @@ var UNPO_DATA = {
           "note": "",
           "owned": false
         }
-      ]
+      ],
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": "드라이빙영통 특전 (흥흥흥)"
+      }
     ],
     "TME": [
       [
