@@ -410,34 +410,30 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
     </div>
   </div>
   <div class="card">
-    <div class="card-title">📁 GitHub 파일 구조</div>
-    <pre style="font:12px/1.7 monospace;color:var(--tx2);padding:4px 0">caligo-pt2/
-├── index.html          <span style="color:var(--tx3)">← 메인 앱 (수정 불필요)</span>
-├── js/
-│   ├── data.js         <span style="color:var(--warn)">← 판매처·배급사 데이터</span>
-│   ├── unpo.js         <span style="color:var(--pk)">← 미공포 이미지 경로</span>
-│   └── app.js          <span style="color:var(--tx3)">← 앱 로직 (수정 불필요)</span>
-├── images/
-│   ├── inventory/      <span style="color:var(--tx3)">← INVENTORY 미공포</span>
-│   ├── photobook/      <span style="color:var(--tx3)">← PHOTOBOOK 미공포</span>
-│   ├── id_pass/        <span style="color:var(--tx3)">← ID PASS 미공포</span>
-│   ├── pocaalbum/      <span style="color:var(--tx3)">← POCAALBUM 미공포</span>
-│   ├── char_img_*.webp <span style="color:var(--tx3)">← 멤버 캐릭터 이미지</span>
-│   └── placeholder_*.webp
-└── admin/
-    └── admin.html      <span style="color:var(--ok)">← 이 파일</span></pre>
+    <div class="card-title">📁 저장 방식 안내</div>
+    <pre style="font:12px/1.7 monospace;color:var(--tx2);padding:4px 0"><span style="color:var(--pk)">🚀 GitHub에 저장</span> 버튼 클릭 시:
+
+  1. 업로드된 이미지 → <span style="color:var(--warn)">images/</span> 폴더에 push
+  2. <span style="color:var(--ok)">index.html</span> 내 데이터 블록 직접 교체 후 push
+       ├── var DISTRIBUTORS = [...]   ← 배급사
+       ├── var STORES = [...]          ← 판매처
+       ├── var UNPO_MULTI_SETS = {...}
+       ├── var UNPO_SHARED = [...]
+       └── var UNPO_DATA = {...}        ← 미공포 세트·이미지
+
+  약 1분 후 GitHub Pages에 자동 반영됩니다.</pre>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div class="card">
-      <div class="card-title">data.js</div>
-      <p class="text-sm text-muted" style="margin-bottom:12px">판매처·배급사 추가/수정 후 다운로드</p>
+      <div class="card-title">data.js <span class="text-muted text-sm">(참고용)</span></div>
+      <p class="text-sm text-muted" style="margin-bottom:12px">현재 STATE 미리보기 (GitHub push는 index.html에 직접 반영됩니다)</p>
       <button class="btn btn-ok" onclick="downloadDataJs()">⬇ data.js 다운로드</button>
       <hr class="divider">
       <div class="export-box" id="export-data-js" style="font-size:11px">로딩중...</div>
     </div>
     <div class="card">
-      <div class="card-title">unpo.js</div>
-      <p class="text-sm text-muted" style="margin-bottom:12px">미공포 이미지 경로 변경 후 다운로드</p>
+      <div class="card-title">unpo.js <span class="text-muted text-sm">(참고용)</span></div>
+      <p class="text-sm text-muted" style="margin-bottom:12px">현재 STATE 미리보기 (GitHub push는 index.html에 직접 반영됩니다)</p>
       <button class="btn btn-ok" onclick="downloadUnpoJs()">⬇ unpo.js 다운로드</button>
       <hr class="divider">
       <div class="export-box" id="export-unpo-js" style="font-size:11px">로딩중...</div>
@@ -1034,6 +1030,7 @@ function saveStore() {
   syncUnpoForStore(store, isNew);
   STATE.dirty = true;
   STATE.pendingDataJs = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   closeModal('store-modal');
   renderStoresTable();
@@ -1785,44 +1782,38 @@ async function saveAllToGitHub() {
     showPage('github');
     return;
   }
-  const imgEntries = Object.values(STATE.pendingImages);
-  const total = imgEntries.length + (STATE.pendingDataJs ? 1 : 0) + 1; // +1 for unpo.js (always)
 
-  if(total === 0) return;
+  const imgEntries = Object.values(STATE.pendingImages);
+  const hasAnyChange = imgEntries.length > 0 || STATE.pendingDataJs || STATE.pendingUnpoJs;
+  if(!hasAnyChange) { showToast('저장할 변경사항이 없습니다', 'info'); return; }
 
   const btn = document.getElementById('save-btn');
   const btnText = document.getElementById('save-btn-text');
   btn.disabled = true;
   btnText.textContent = '저장 중...';
-  addCommitLog(`⏳ ${imgEntries.length}장 이미지 + JS 파일 push 시작...`, 'info');
+  addCommitLog(`⏳ push 시작 — 이미지 ${imgEntries.length}장 + index.html`, 'info');
 
-  let success = 0, failed = 0;
+  let imgSuccess = 0, imgFailed = 0;
   try {
     // 1. 이미지 파일들 순차 push
     for(let i = 0; i < imgEntries.length; i++) {
       const { dataUrl, filename, imagePath } = imgEntries[i];
-      btnText.textContent = `저장 중 ${i+1}/${imgEntries.length}...`;
+      btnText.textContent = `이미지 저장 중 ${i+1}/${imgEntries.length}...`;
       try {
         const base64 = dataUrl.split(',')[1];
         const sha = await getFileSha(imagePath);
         await ghPutFile(imagePath, base64, `📸 미공포: ${filename}`, sha);
         addCommitLog(`✓ ${imagePath}`, 'ok');
-        success++;
+        imgSuccess++;
       } catch(e) {
         addCommitLog(`❌ 실패: ${filename} — ${e.message}`, 'err');
-        failed++;
+        imgFailed++;
       }
     }
 
-    // 2. data.js push (변경된 경우)
-    if(STATE.pendingDataJs) {
-      btnText.textContent = 'data.js 저장 중...';
-      await ghPushDataJs();
-    }
-
-    // 3. unpo.js는 항상 push (이미지 경로 반영)
-    btnText.textContent = 'unpo.js 저장 중...';
-    await ghPushUnpoJs();
+    // 2. index.html 데이터 블록 교체 push (항상 실행)
+    btnText.textContent = 'index.html 저장 중...';
+    await ghPushIndexHtml();
 
     // 완료
     STATE.pendingImages = {};
@@ -1831,11 +1822,11 @@ async function saveAllToGitHub() {
     STATE.dirty = false;
     updateSaveBar();
 
-    const msg = failed > 0
-      ? `완료 (성공 ${success}장, 실패 ${failed}장) — GitHub Pages 반영까지 ~1분`
-      : `🎉 완료! ${success}장 이미지 + JS 저장됨 — GitHub Pages 반영까지 ~1분`;
-    addCommitLog(msg, failed > 0 ? 'warn' : 'ok');
-    showToast(msg, failed > 0 ? 'warn' : 'ok');
+    const msg = imgFailed > 0
+      ? `완료 (이미지 ${imgSuccess}장 성공, ${imgFailed}장 실패) — 반영까지 ~1분`
+      : `🎉 완료! — GitHub Pages 반영까지 ~1분`;
+    addCommitLog(msg, imgFailed > 0 ? 'warn' : 'ok');
+    showToast(msg, imgFailed > 0 ? 'warn' : 'ok');
 
   } catch(e) {
     addCommitLog(`❌ 저장 오류: ${e.message}`, 'err');
@@ -1850,20 +1841,88 @@ async function saveAllToGitHub() {
 async function ghPushUnpoImage() {}
 
 async function ghPushUnpoJs() {
-  const unpoJsContent = generateUnpoJs();
-  const base64 = btoa(unescape(encodeURIComponent(unpoJsContent)));
-  const sha = await getFileSha('js/unpo.js');
-  await ghPutFile('js/unpo.js', base64, '🔄 unpo.js 자동 업데이트', sha);
-  addCommitLog(`✓ unpo.js 업데이트 push`, 'ok');
-  addCommitLog(`🚀 GitHub Pages 배포 시작 (약 1분 소요)`, 'info');
+  // 더 이상 별도 unpo.js push 안 함 — index.html에 직접 반영
+  await ghPushIndexHtml();
 }
 
 async function ghPushDataJs() {
-  const content = generateDataJs();
-  const base64 = btoa(unescape(encodeURIComponent(content)));
-  const sha = await getFileSha('js/data.js');
-  await ghPutFile('js/data.js', base64, '🔄 data.js 자동 업데이트', sha);
-  addCommitLog(`✓ data.js 업데이트 push`, 'ok');
+  // 더 이상 별도 data.js push 안 함 — index.html에 직접 반영
+  // (ghPushIndexHtml는 saveAllToGitHub에서 한 번만 호출)
+}
+
+// index.html의 인라인 데이터 블록을 교체해서 push
+async function ghPushIndexHtml() {
+  const cfg = getGhConfig();
+  addCommitLog('⏳ index.html 데이터 블록 교체 중...', 'info');
+
+  // 1. GitHub에서 현재 index.html 받기
+  const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}/contents/index.html?ref=${cfg.branch}`, 'GET');
+  if(!res.ok) throw new Error(`index.html 로드 실패: HTTP ${res.status}`);
+  const fileData = await res.json();
+  const sha = fileData.sha;
+  let html = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+
+  // 2. unpoData에서 previewUrl(dataUrl) 제거 — 경로만 남김
+  const cleanedUnpoData = cleanUnpoDataForExport(STATE.unpoData);
+
+  // 3. 각 데이터 블록 교체 (정규식으로 var XXX = ... ; 블록 통째로 교체)
+  html = replaceInlineVar(html, 'DISTRIBUTORS',   JSON.stringify(STATE.distributors, null, 2));
+  html = replaceInlineVar(html, 'STORES',         JSON.stringify(STATE.stores, null, 2));
+  html = replaceInlineVar(html, 'UNPO_MULTI_SETS',JSON.stringify(STATE.multiSets || {}, null, 2));
+  html = replaceInlineVar(html, 'UNPO_SHARED',    JSON.stringify(STATE.shared || [], null, 2));
+  html = replaceInlineVar(html, 'UNPO_DATA',      JSON.stringify(cleanedUnpoData, null, 2));
+
+  // 날짜 주석 갱신
+  html = html.replace(
+    /\/\/ Last updated: \d{4}-\d{2}-\d{2}/,
+    `// Last updated: ${new Date().toISOString().slice(0,10)}`
+  );
+
+  // 4. push
+  const base64 = btoa(unescape(encodeURIComponent(html)));
+  await ghPutFile('index.html', base64, `🔄 admin 데이터 업데이트 (${new Date().toISOString().slice(0,10)})`, sha);
+  addCommitLog('✓ index.html 업데이트 push 완료', 'ok');
+  addCommitLog('🚀 GitHub Pages 배포 시작 (약 1분 소요)', 'info');
+}
+
+// index.html 안의 "var NAME = ...;" 블록을 새 값으로 교체
+function replaceInlineVar(html, varName, newJsonValue) {
+  // var VARNAME = ... (배열이면 ];, 객체면 };) 로 끝나는 블록 매칭
+  const re = new RegExp(`(var ${varName}\\s*=\\s*)([\\s\\S]*?)(;\\s*\\n)`, 'm');
+  const isArray = newJsonValue.trimStart().startsWith('[');
+  const replacement = `var ${varName} = ${newJsonValue};\n`;
+  if(re.test(html)) {
+    return html.replace(re, replacement);
+  }
+  // 매칭 실패 시 경고만 하고 원본 반환
+  console.warn(`replaceInlineVar: "${varName}" 블록을 찾지 못했습니다`);
+  addCommitLog(`⚠️ ${varName} 블록 교체 실패 — 수동 확인 필요`, 'warn');
+  return html;
+}
+
+// unpoData에서 dataUrl 제거 (경로만 유지)
+function cleanUnpoDataForExport(data) {
+  const out = {};
+  Object.entries(data).forEach(([section, stores]) => {
+    out[section] = {};
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      out[section][storeName] = sets.map(s => {
+        const isFlat = Array.isArray(s);
+        const cards = isFlat ? s : (s.cards || []);
+        const memo  = isFlat ? '' : (s.memo || '');
+        const cleanCards = cards.map(c => ({
+          ...c,
+          img: (c.img && c.img.startsWith('data:'))
+            ? (Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img)?.imagePath
+                ? `./${Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img).imagePath}`
+                : null)
+            : (c.img || null),
+        }));
+        return isFlat ? cleanCards : { cards: cleanCards, memo };
+      });
+    });
+  });
+  return out;
 }
 
 async function pushAllToGitHub() {
@@ -1917,11 +1976,36 @@ var UNPO_SHARED = ${JSON.stringify(d.shared, null, 2)};
 }
 
 function generateUnpoJs() {
-  // unpo 이미지가 data URL이면 그대로, 경로이면 경로 유지
+  // unpoData에서 img가 dataUrl(base64)이면 경로로 대체, 경로면 그대로 유지
+  function cleanUnpoData(data) {
+    const out = {};
+    Object.entries(data).forEach(([section, stores]) => {
+      out[section] = {};
+      Object.entries(stores).forEach(([storeName, sets]) => {
+        out[section][storeName] = sets.map(s => {
+          const isFlat = Array.isArray(s);
+          const cards = isFlat ? s : (s.cards || []);
+          const memo  = isFlat ? '' : (s.memo || '');
+          const cleanCards = cards.map(c => ({
+            ...c,
+            // dataUrl이면 pendingImages에서 경로를 역으로 찾아 치환
+            img: (c.img && c.img.startsWith('data:'))
+              ? (Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img)?.imagePath
+                  ? `./${Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img).imagePath}`
+                  : null)
+              : (c.img || null),
+          }));
+          return isFlat ? cleanCards : { cards: cleanCards, memo };
+        });
+      });
+    });
+    return out;
+  }
+
   return `// Caligo Pt.2 - 미공포 메타데이터
 // Last updated: ${new Date().toISOString().slice(0,10)}
 
-var UNPO_DATA = ${JSON.stringify(STATE.unpoData, null, 2)};
+var UNPO_DATA = ${JSON.stringify(cleanUnpoData(STATE.unpoData), null, 2)};
 `;
 }
 
