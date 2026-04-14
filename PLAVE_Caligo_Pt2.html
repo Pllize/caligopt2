@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>PLAVE Caligo Pt.2</title>
 <script>
+// Redirect to GitHub Pages
+(function(){
+  var target = 'https://pllize.github.io/caligopt2';
+  if(location.href.replace(/\/$/, '') !== target.replace(/\/$/, '')){
+    location.replace(target);
+  }
+})();
+</script>
+<script>
 // Service Worker for offline caching
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
   const sw = `
