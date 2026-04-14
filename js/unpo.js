@@ -1,5 +1,7 @@
-// Caligo Pt.2 - 미공포 메타데이터
-// Last updated: 2026-04-14
+// Caligo Pt.2 — 미공포 메타데이터 (이미지 URL 버전)
+// img 값이 URL 경로임. 기존 base64 대신 파일로 관리.
+// 새 미공포: images/{section}/ 에 파일 추가 후 img 경로 업데이트
+// Last updated: 2026-04-13
 
 var UNPO_DATA = {
   "INVENTORY": {
@@ -311,7 +313,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/id_pass/hello82_set1_group.webp",
+            "img": "./images/id_pass/hello82_set1_back.webp",
             "note": "",
             "owned": false
           }
@@ -346,7 +348,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/id_pass/hello82_set2_group.webp",
+            "img": "./images/id_pass/hello82_set2_back.webp",
             "note": "",
             "owned": false
           }
@@ -382,7 +384,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/id_pass/animate_group.webp",
+          "img": "./images/id_pass/animate_back.webp",
           "note": "",
           "owned": false
         }
@@ -416,7 +418,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/id_pass/hmv_group.webp",
+          "img": "./images/id_pass/hmv_back.webp",
           "note": "",
           "owned": false
         }
@@ -479,7 +481,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/id_pass/towerrecords_group.webp",
+          "img": "./images/id_pass/towerrecords_back.webp",
           "note": "",
           "owned": false
         }
@@ -544,7 +546,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/pocaalbum/willmusic_group.webp",
+          "img": "./images/pocaalbum/willmusic_back.webp",
           "note": "",
           "owned": false
         }
@@ -578,7 +580,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/pocaalbum/makestar_group.webp",
+          "img": "./images/pocaalbum/makestar_back.webp",
           "note": "",
           "owned": false
         }
@@ -692,7 +694,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/pocaalbum/ketapo_set1_group.webp",
+            "img": "./images/pocaalbum/ketapo_set1_back.webp",
             "note": "",
             "owned": false
           }
@@ -727,7 +729,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/pocaalbum/ketapo_set2_group.webp",
+            "img": "./images/pocaalbum/ketapo_set2_back.webp",
             "note": "",
             "owned": false
           }
