@@ -665,22 +665,85 @@ function loadScript(src) {
 }
 
 async function init() {
+  // 1. 로컬 js 파일 시도 (서버 환경)
+  let loaded = false;
   try {
     await loadScript('../js/data.js');
     await loadScript('../js/unpo.js');
+    loaded = true;
   } catch(e) {
-    console.warn('data.js / unpo.js 로드 실패 — 빈 상태로 시작합니다:', e);
+    console.warn('로컬 JS 로드 실패, GitHub에서 직접 로드 시도:', e);
   }
-  // 로드 성공 여부 관계없이 STATE에 반영 (없으면 빈 값)
-  STATE.distributors = JSON.parse(JSON.stringify(window.DISTRIBUTORS || []));
-  STATE.stores       = JSON.parse(JSON.stringify(window.STORES || []));
-  STATE.unpoData     = JSON.parse(JSON.stringify(window.UNPO_DATA || {}));
-  STATE.multiSets    = JSON.parse(JSON.stringify(window.UNPO_MULTI_SETS || {}));
-  STATE.shared       = JSON.parse(JSON.stringify(window.UNPO_SHARED || []));
+
+  if(loaded) {
+    STATE.distributors = JSON.parse(JSON.stringify(window.DISTRIBUTORS || []));
+    STATE.stores       = JSON.parse(JSON.stringify(window.STORES || []));
+    STATE.unpoData     = JSON.parse(JSON.stringify(window.UNPO_DATA || {}));
+    STATE.multiSets    = JSON.parse(JSON.stringify(window.UNPO_MULTI_SETS || {}));
+    STATE.shared       = JSON.parse(JSON.stringify(window.UNPO_SHARED || []));
+  } else {
+    // 2. GitHub에서 index.html 직접 fetch해서 파싱
+    await loadFromGitHub();
+  }
 
   renderAll();
   loadGhConfig();
   updateGhStatusBadge();
+}
+
+// GitHub에서 index.html을 받아 데이터 블록을 파싱해서 STATE에 채움
+async function loadFromGitHub() {
+  const cfg = getGhConfig();
+  if(!cfg.owner || !cfg.repo || !cfg.token) {
+    showToast('GitHub 설정이 없습니다. GitHub 연동 탭에서 먼저 설정하세요.', 'warn');
+    return;
+  }
+  try {
+    showToast('GitHub에서 데이터 로드 중...', 'info');
+    const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}/contents/index.html?ref=${cfg.branch}`, 'GET');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const fileData = await res.json();
+    const raw = fileData.content.replace(/\n/g, '');
+    const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+    const html = new TextDecoder('utf-8').decode(bytes);
+
+    // 각 변수 블록을 eval로 파싱
+    STATE.distributors = extractVar(html, 'DISTRIBUTORS') || [];
+    STATE.stores       = extractVar(html, 'STORES')       || [];
+    STATE.unpoData     = extractVar(html, 'UNPO_DATA')    || {};
+    STATE.multiSets    = extractVar(html, 'UNPO_MULTI_SETS') || {};
+    STATE.shared       = extractVar(html, 'UNPO_SHARED')  || [];
+    showToast('✓ GitHub에서 데이터 로드 완료', 'ok');
+  } catch(e) {
+    console.error('GitHub 로드 실패:', e);
+    showToast(`GitHub 로드 실패: ${e.message}`, 'err');
+  }
+}
+
+// html 문자열에서 var NAME = ...; 블록을 추출해 JSON.parse
+function extractVar(html, varName) {
+  const startMarker = `var ${varName} = `;
+  const startIdx = html.indexOf(startMarker);
+  if(startIdx === -1) return null;
+  const valueStart = startIdx + startMarker.length;
+  const firstChar = html[valueStart];
+  const closeChar = firstChar === '[' ? ']' : '}';
+  let depth = 0, endIdx = -1;
+  for(let i = valueStart; i < html.length; i++) {
+    const ch = html[i];
+    if(ch === firstChar) depth++;
+    else if(ch === closeChar) {
+      depth--;
+      if(depth === 0) { endIdx = i + 1; break; }
+    }
+  }
+  if(endIdx === -1) return null;
+  try {
+    return JSON.parse(html.slice(valueStart, endIdx));
+  } catch(e) {
+    console.warn(`extractVar(${varName}) JSON.parse 실패:`, e);
+    return null;
+  }
 }
 
 function showFallbackNotice() {
@@ -1741,25 +1804,18 @@ async function ghPutFile(path, base64Content, message, sha) {
 function updateSaveBar() {
   const bar = document.getElementById('save-bar');
   const imgCount = Object.keys(STATE.pendingImages).length;
-  const hasStructChange = STATE.pendingUnpoJs && imgCount === 0; // 구조만 변경 (이미지 없음)
-  const count = imgCount
-    + (STATE.pendingDataJs ? 1 : 0)
-    + (STATE.pendingUnpoJs ? 1 : 0);
-  if(count === 0) {
+  const hasChange = imgCount > 0 || STATE.pendingDataJs || STATE.pendingUnpoJs;
+  if(!hasChange) {
     bar.classList.remove('visible');
     return;
   }
   bar.classList.add('visible');
-  // 카운트는 "의미 있는 변경 묶음" 수로 표시
-  const displayCount = (imgCount > 0 ? 1 : 0)
-    + (STATE.pendingDataJs ? 1 : 0)
-    + (hasStructChange ? 1 : 0);
-  document.getElementById('save-pending-count').textContent = displayCount;
   const details = [];
+  if(STATE.pendingDataJs) details.push('판매처·배급사');
+  if(STATE.pendingUnpoJs) details.push('미공포 구조');
   if(imgCount > 0) details.push(`이미지 ${imgCount}장`);
-  if(STATE.pendingDataJs) details.push('data.js');
-  if(STATE.pendingUnpoJs) details.push('unpo.js (세트/구조 변경)');
-  document.getElementById('save-bar-detail').textContent = `(${details.join(', ')})`;
+  document.getElementById('save-pending-count').textContent = details.length;
+  document.getElementById('save-bar-detail').textContent = `(${details.join(', ')} — index.html에 반영)`;
 }
 
 // discardPending: 대기 취소 (이미지는 되돌리기 어려우므로 페이지 새로고침)
