@@ -1,7 +1,5 @@
-// Caligo Pt.2 — 미공포 메타데이터 (이미지 URL 버전)
-// img 값이 URL 경로임. 기존 base64 대신 파일로 관리.
-// 새 미공포: images/{section}/ 에 파일 추가 후 img 경로 업데이트
-// Last updated: 2026-04-13
+// Caligo Pt.2 - 미공포 메타데이터
+// Last updated: 2026-04-14
 
 var UNPO_DATA = {
   "INVENTORY": {
@@ -275,6 +273,26 @@ var UNPO_DATA = {
       ],
       {
         "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
           {
             "img": null,
             "note": "",
@@ -622,6 +640,26 @@ var UNPO_DATA = {
             "img": null,
             "note": "",
             "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
           }
         ],
         "memo": "ASTERUM 433-10 (십카페럭드), 무신사 세트2와 동일"
@@ -657,13 +695,36 @@ var UNPO_DATA = {
       ]
     ],
     "더현대서울": [
-      [
-        {
-          "img": null,
-          "note": "",
-          "owned": false
-        }
-      ]
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": ""
+      }
     ],
     "케타포": [
       {
