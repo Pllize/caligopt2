@@ -149,6 +149,13 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
 .card-ctrl-bar { display:flex; gap:4px; margin-top:4px; }
 .card-ctrl-bar button { flex:1; padding:3px 0; font-size:10px; border-radius:3px; border:1px solid var(--bd2); background:var(--sur2); color:var(--tx2); cursor:pointer; }
 .card-ctrl-bar button:hover { color:var(--tx); border-color:var(--pk); }
+.back-toggle { display:inline-flex; align-items:center; gap:5px; cursor:pointer; padding:3px 10px; border-radius:var(--r-sm); border:1px solid var(--bd2); background:var(--sur); font-size:12px; color:var(--tx2); transition:all .15s; }
+.back-toggle:hover { border-color:var(--pk); color:var(--pk); }
+.back-toggle.active { border-color:var(--pk2); background:rgba(192,132,252,.12); color:var(--pk); font-weight:600; }
+.set-count-ctrl { display:inline-flex; align-items:center; gap:4px; }
+.set-count-ctrl button { padding:3px 10px; font-size:12px; border-radius:var(--r-sm); border:1px solid var(--bd2); background:var(--sur); color:var(--tx2); cursor:pointer; }
+.set-count-ctrl button:hover { border-color:var(--pk); color:var(--pk); }
+.unpo-set-header-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--bd); }
 .note-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; align-items:center; justify-content:center; }
 .note-modal-bg.open { display:flex; }
 .note-modal { background:var(--sur); border:1px solid var(--bd2); border-radius:var(--r); padding:20px; width:320px; }
@@ -470,7 +477,7 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
           </select>
         </div>
         <div><label>미공포 종류</label>
-          <select id="sm-perk">
+          <select id="sm-perk" onchange="smUpdateUnpoOptions()">
             <option value="">없음</option>
             <option value="INVENTORY">INVENTORY</option>
             <option value="PHOTOBOOK">PHOTOBOOK</option>
@@ -483,6 +490,26 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
             <option value="false">없음</option>
             <option value="true">있음</option>
           </select>
+        </div>
+      </div>
+      <div id="sm-unpo-options" style="display:none">
+        <div class="form-row cols-2">
+          <div>
+            <label>미공포 세트 수</label>
+            <select id="sm-unpo-sets">
+              <option value="1">1세트</option>
+              <option value="2">2세트</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:2px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 0">
+              <input type="checkbox" id="sm-unpo-back"> 뒷면 포함
+              <span class="text-muted text-sm" style="font-weight:400">(앞면 5장 + 뒷면 1장)</span>
+            </label>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:4px;margin-top:-4px">
+          ※ 각 세트는 사진이 겹칠 수 있습니다
         </div>
       </div>
       <div class="form-row cols-2">
@@ -586,6 +613,7 @@ const STATE = {
   shared: [],
   dirty: false,
   pendingImages: {},   // { imagePath: { dataUrl, filename, ... } }
+  previewUrls: {},     // { imagePath: dataUrl } — 업로드 후 admin 내 미리보기용
   pendingDataJs: false,
   pendingUnpoJs: false,
 };
@@ -771,7 +799,11 @@ function renderStoresTable() {
       <td style="font-weight:600">${s.name}</td>
       <td class="text-muted">${dist ? dist.name : s.distId || '-'}</td>
       <td><span class="badge badge-info">${s.country}</span></td>
-      <td>${perk ? `<span class="badge badge-pk">${perk}</span>` : '<span class="text-muted">-</span>'}</td>
+      <td>${perk
+          ? `<span class="badge badge-pk">${perk}</span>
+             ${s.unpoSets > 1 ? `<span class="badge badge-info" style="margin-left:3px">${s.unpoSets}세트</span>` : ''}
+             ${s.unpoBack ? `<span class="badge badge-gray" style="margin-left:3px">뒷면↩</span>` : ''}`
+          : '<span class="text-muted">-</span>'}</td>
       <td class="text-muted text-sm">${start} ~ ${end}</td>
       <td>${s.videocall ? '<span class="dot-ok"></span>' : '<span class="dot-none"></span>'}</td>
       <td>
@@ -821,7 +853,7 @@ function renderUnpoPage() {
         <div class="unpo-store-header">
           <span class="unpo-store-name">${storeName}</span>
           ${isShared ? `<span class="badge badge-warn" title="카운트 제외됨 (${sharedSrc?.bn||''}와 공유)">🔗 공유됨</span>` : `<span class="badge badge-gray">${sets.length}세트</span>`}
-          <button class="btn btn-ghost btn-sm" onclick="addUnpoSet('${section}','${esc}')">+ 세트 추가</button>
+          ${sets.length < 2 ? `<button class="btn btn-ghost btn-sm" onclick="addUnpoSet('${section}','${esc}')">+ 세트 추가</button>` : `<span class="text-muted text-sm" style="font-size:11px">최대 2세트</span>`}
           <button class="btn btn-err btn-sm" onclick="removeUnpoStore('${section}','${esc}')">판매처 제거</button>
         </div>
         <div class="unpo-sets">`;
@@ -836,9 +868,10 @@ function renderUnpoPage() {
             <input class="unpo-set-memo" style="background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 8px;font-size:12px;color:var(--tx2);width:180px"
               placeholder="세트 메모 (예: 럭키드로우)" value="${memo}"
               oninput="setUnpoMemo('${section}','${esc}',${si},this.value)">
-            ${cards.length===5
-              ? `<button class="btn btn-ghost btn-sm" onclick="setUnpoCardCount('${section}','${esc}',${si},6)">6장으로</button>`
-              : `<button class="btn btn-ghost btn-sm" onclick="setUnpoCardCount('${section}','${esc}',${si},5)">5장으로</button>`}
+            <button class="back-toggle ${cards.length >= 6 ? 'active' : ''}"
+              onclick="toggleUnpoBack('${section}','${esc}',${si})">
+              ↩ 뒷면 ${cards.length >= 6 ? '포함' : '없음'}
+            </button>
             ${sets.length > 1 ? `<button class="btn btn-err btn-sm" onclick="removeUnpoSet('${section}','${esc}',${si})">세트 삭제</button>` : ''}
           </div>
           <div class="unpo-cards">`;
@@ -849,10 +882,11 @@ function renderUnpoPage() {
           const memberKo = MEMBER_KO[member] || member;
           const img = card.img;
           const note = card.note || '';
+          const displaySrc = img ? (STATE.previewUrls[img] || img) : null;
           h += `<div class="unpo-card-wrap">
             <div class="unpo-card" title="${memberKo}">
-              ${img
-                ? `<img src="${img}" alt="${memberKo}" onerror="this.style.display='none'">`
+              ${displaySrc
+                ? `<img src="${displaySrc}" alt="${memberKo}" onerror="this.style.display='none'">`
                 : `<div class="no-img"><span>📷</span><span>${memberKo}</span></div>`}
               <div class="member-label">${memberKo}</div>
               <div class="upload-hint">⬆</div>
@@ -870,14 +904,15 @@ function renderUnpoPage() {
         if(cards.length >= 6) {
           const backCard = cards[5];
           const backImg = backCard?.img;
+          const backDisplaySrc = backImg ? (STATE.previewUrls[backImg] || backImg) : null;
           const backNote = backCard?.note || '';
           h += `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd)">
             <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;font-weight:600">↩ 뒷면 카드</div>
             <div class="flex" style="gap:8px;align-items:flex-start">
               <div class="unpo-card-wrap">
                 <div class="unpo-card" title="뒷면" style="width:60px">
-                  ${backImg
-                    ? `<img src="${backImg}" alt="뒷면" onerror="this.style.display='none'">`
+                  ${backDisplaySrc
+                    ? `<img src="${backDisplaySrc}" alt="뒷면" onerror="this.style.display='none'">`
                     : `<div class="no-img"><span>↩</span><span>뒷면</span></div>`}
                   <div class="member-label">뒷면</div>
                   <div class="upload-hint">⬆</div>
@@ -925,6 +960,10 @@ function openStoreModal(editIdx = null) {
     document.getElementById('sm-country').value    = s.country || 'KR';
     document.getElementById('sm-perk').value       = s.unpoPerk || '';
     document.getElementById('sm-vc').value         = String(s.videocall || false);
+    // 미공포 옵션
+    document.getElementById('sm-unpo-sets').value  = String(s.unpoSets || 1);
+    document.getElementById('sm-unpo-back').checked = s.unpoBack || false;
+    smUpdateUnpoOptions();
     document.getElementById('sm-start').value      = s.purchaseStart || '';
     document.getElementById('sm-end').value        = s.purchaseEnd   || '';
     document.getElementById('sm-off-start').value  = s.offlineStart  || '';
@@ -949,6 +988,9 @@ function openStoreModal(editIdx = null) {
     document.getElementById('sm-dom-ship').value = 0;
     document.getElementById('sm-ovs-ship').value = 0;
     document.getElementById('sm-lucky').checked = false;
+    document.getElementById('sm-unpo-sets').value = '1';
+    document.getElementById('sm-unpo-back').checked = false;
+    smUpdateUnpoOptions();
   }
   document.getElementById('store-modal').classList.add('open');
 }
@@ -972,6 +1014,8 @@ function saveStore() {
     distId:        document.getElementById('sm-dist').value,
     country:       document.getElementById('sm-country').value,
     unpoPerk:      document.getElementById('sm-perk').value || null,
+    unpoSets:      parseInt(document.getElementById('sm-unpo-sets').value) || 1,
+    unpoBack:      document.getElementById('sm-unpo-back').checked,
     priceMode:     pm,
     customPrices:  pm === 'custom' ? customPrices : null,
     purchaseStart: document.getElementById('sm-start').value,
@@ -1034,6 +1078,13 @@ const ALBUM_KEYS = [
   {k:'ID_PASS',   lb:'ID PASS'},
   {k:'INVENTORY', lb:'INVENTORY'},
 ];
+
+function smUpdateUnpoOptions() {
+  const perk = document.getElementById('sm-perk').value;
+  const box = document.getElementById('sm-unpo-options');
+  if(!box) return;
+  box.style.display = perk ? '' : 'none';
+}
 
 function smUpdatePriceMode(existingPrices) {
   const pm = document.querySelector('input[name="sm-pm"]:checked')?.value;
@@ -1150,10 +1201,39 @@ function makeBlankSet(n=5) {
 function syncUnpoForStore(store, isNew) {
   const perk = store.unpoPerk;
   const name = store.name;
+  const wantSets = store.unpoSets || 1;
+  const hasBack = store.unpoBack || false;
+  const cardCount = hasBack ? 6 : 5;
+
   if(!perk) return;
   if(!STATE.unpoData[perk]) STATE.unpoData[perk] = {};
+
   if(isNew && !STATE.unpoData[perk][name]) {
-    STATE.unpoData[perk][name] = [makeBlankSet(5)];
+    // 새 판매처: wantSets 개수만큼 빈 세트 생성
+    STATE.unpoData[perk][name] = Array.from({length: wantSets}, () => makeBlankSet(cardCount));
+  } else if(!isNew && STATE.unpoData[perk][name]) {
+    // 기존 판매처 수정: 세트 수·뒷면 동기화 (기존 이미지 보존)
+    const existing = STATE.unpoData[perk][name];
+    // 세트 수 조정
+    while(existing.length < wantSets) existing.push(makeBlankSet(cardCount));
+    if(existing.length > wantSets) existing.splice(wantSets);
+    // 각 세트 카드 수 조정 (이미지 보존)
+    existing.forEach((s, si) => {
+      const isFlat = Array.isArray(s);
+      const cards = isFlat ? s : (s.cards || []);
+      const memo = isFlat ? '' : (s.memo || '');
+      const members = cardCount === 6
+        ? ['yejun','noa','bambi','eunho','hamin','back']
+        : ['yejun','noa','bambi','eunho','hamin'];
+      const newCards = members.map((m, i) => {
+        const ex = cards[i] || {};
+        return { img: ex.img || null, note: ex.note || '', owned: ex.owned || false };
+      });
+      existing[si] = { cards: newCards, memo };
+    });
+  } else if(!isNew && !STATE.unpoData[perk][name]) {
+    // 미공포 데이터가 없었는데 perk 설정된 경우
+    STATE.unpoData[perk][name] = Array.from({length: wantSets}, () => makeBlankSet(cardCount));
   }
 }
 
@@ -1168,12 +1248,18 @@ function removeUnpoForStore(store) {
   }
 }
 
-// 세트 추가
+// 세트 추가 (최대 2세트)
 function addUnpoSet(section, storeName) {
   const name = decodeURIComponent(storeName);
   const sets = getUnpoSets(section, name);
-  sets.push(makeBlankSet(5));
+  if(sets.length >= 2) { alert('미공포 세트는 최대 2개까지 추가할 수 있습니다.'); return; }
+  // 기존 첫 세트의 뒷면 여부를 기준으로 새 세트 카드 수 결정
+  const firstSet = sets[0];
+  const firstCards = Array.isArray(firstSet) ? firstSet : (firstSet?.cards || []);
+  const cardCount = firstCards.length >= 6 ? 6 : 5;
+  sets.push(makeBlankSet(cardCount));
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   renderUnpoPage();
   renderDashboard();
@@ -1187,6 +1273,7 @@ function removeUnpoSet(section, storeName, si) {
   if(!confirm(`Set ${si+1}을 삭제하시겠습니까?`)) return;
   sets.splice(si, 1);
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   renderUnpoPage();
   renderDashboard();
@@ -1198,29 +1285,42 @@ function removeUnpoStore(section, storeName) {
   if(!confirm(`"${name}" 미공포 항목을 제거하시겠습니까? (판매처는 유지됩니다)`)) return;
   if(STATE.unpoData[section]) delete STATE.unpoData[section][name];
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   renderUnpoPage();
   renderDashboard();
 }
 
-// 카드 수 변경 (5↔6)
-function setUnpoCardCount(section, storeName, si, n) {
+// 뒷면 포함/제외 토글
+function toggleUnpoBack(section, storeName, si) {
   const name = decodeURIComponent(storeName);
   const sets = getUnpoSets(section, name);
   const s = sets[si];
   const cards = Array.isArray(s) ? s : (s.cards || []);
   const memo = Array.isArray(s) ? '' : (s.memo || '');
-  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','back'] : ['yejun','noa','bambi','eunho','hamin'];
-  
-  // 기존 카드 img/note 보존
-  const newCards = members.map((m, i) => {
-    const existing = cards[i] || {};
-    return { img: existing.img || null, note: existing.note || '', owned: existing.owned || false };
-  });
-  sets[si] = { cards: newCards, memo };
+  const hasBack = cards.length >= 6;
+
+  if(hasBack) {
+    // 뒷면 제거 — 뒷면 이미지가 있으면 확인
+    const backCard = cards[5];
+    if(backCard?.img) {
+      if(!confirm('뒷면 이미지가 등록되어 있습니다. 뒷면을 제거하시겠습니까?')) return;
+    }
+    sets[si] = { cards: cards.slice(0, 5), memo };
+  } else {
+    // 뒷면 추가
+    const newCards = [...cards.slice(0, 5), { img: null, note: '', owned: false }];
+    sets[si] = { cards: newCards, memo };
+  }
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   renderUnpoPage();
+}
+
+// 카드 수 변경 (하위 호환용 — toggleUnpoBack으로 대체됨)
+function setUnpoCardCount(section, storeName, si, n) {
+  toggleUnpoBack(section, storeName, si);
 }
 
 // 세트 메모 변경
@@ -1234,6 +1334,7 @@ function setUnpoMemo(section, storeName, si, value) {
     s.memo = value;
   }
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
 }
 
@@ -1244,13 +1345,17 @@ function clearUnpoImg(section, storeName, si, ci) {
   const s = sets[si];
   const cards = Array.isArray(s) ? s : (s.cards || []);
   if(!confirm('이 카드 이미지를 삭제하시겠습니까?')) return;
+  const oldImg = cards[ci]?.img;
   if(cards[ci]) cards[ci].img = null;
+  // 미리보기 캐시에서도 제거
+  if(oldImg) delete STATE.previewUrls[oldImg];
   // 대기열에서도 제거
   const sec = section;
   Object.keys(STATE.pendingImages).forEach(k => {
     if(k.includes(name.toLowerCase().replace(/[^a-z0-9]/g,'_'))) delete STATE.pendingImages[k];
   });
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   renderUnpoPage();
   renderDashboard();
@@ -1278,6 +1383,7 @@ function saveNote() {
   const cards = Array.isArray(s) ? s : (s.cards || []);
   if(cards[ci]) cards[ci].note = val;
   STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
   updateSaveBar();
   closeNoteModal();
   renderUnpoPage();
@@ -1506,8 +1612,12 @@ function uploadUnpoImg(evt, section, storeName, setIdx, cardIdx) {
     if(cards[cardIdx]) cards[cardIdx].img = `./${imagePath}`;
     STATE.dirty = true;
 
+    // 미리보기용 dataUrl 저장 (admin 내 로컬 표시용)
+    STATE.previewUrls[`./${imagePath}`] = dataUrl;
+
     // 대기열에 추가 (저장 버튼 누를 때 일괄 push)
     STATE.pendingImages[imagePath] = { dataUrl, filename, imagePath, section, storeName, setIdx, cardIdx };
+    STATE.pendingUnpoJs = true;
     updateSaveBar();
 
     renderUnpoPage();
@@ -1626,7 +1736,9 @@ async function ghPutFile(path, base64Content, message, sha) {
 // updateSaveBar: 대기 중인 변경사항 바 업데이트
 function updateSaveBar() {
   const bar = document.getElementById('save-bar');
-  const count = Object.keys(STATE.pendingImages).length
+  const imgCount = Object.keys(STATE.pendingImages).length;
+  const hasStructChange = STATE.pendingUnpoJs && imgCount === 0; // 구조만 변경 (이미지 없음)
+  const count = imgCount
     + (STATE.pendingDataJs ? 1 : 0)
     + (STATE.pendingUnpoJs ? 1 : 0);
   if(count === 0) {
@@ -1634,12 +1746,15 @@ function updateSaveBar() {
     return;
   }
   bar.classList.add('visible');
-  document.getElementById('save-pending-count').textContent = count;
-  const imgCount = Object.keys(STATE.pendingImages).length;
+  // 카운트는 "의미 있는 변경 묶음" 수로 표시
+  const displayCount = (imgCount > 0 ? 1 : 0)
+    + (STATE.pendingDataJs ? 1 : 0)
+    + (hasStructChange ? 1 : 0);
+  document.getElementById('save-pending-count').textContent = displayCount;
   const details = [];
   if(imgCount > 0) details.push(`이미지 ${imgCount}장`);
   if(STATE.pendingDataJs) details.push('data.js');
-  if(STATE.pendingUnpoJs) details.push('unpo.js');
+  if(STATE.pendingUnpoJs) details.push('unpo.js (세트/구조 변경)');
   document.getElementById('save-bar-detail').textContent = `(${details.join(', ')})`;
 }
 
@@ -1647,6 +1762,7 @@ function updateSaveBar() {
 function discardPending() {
   if(!confirm('변경사항을 취소하고 페이지를 새로고침 합니다. 업로드한 이미지는 사라집니다. 계속하시겠습니까?')) return;
   STATE.pendingImages = {};
+  STATE.previewUrls = {};
   STATE.pendingDataJs = false;
   STATE.pendingUnpoJs = false;
   STATE.dirty = false;
