@@ -1,5 +1,5 @@
 // Caligo Pt.2 - 미공포 메타데이터
-// Last updated: 2026-04-13
+// Last updated: 2026-04-14
 
 var UNPO_DATA = {
   "INVENTORY": {
