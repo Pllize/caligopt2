@@ -139,6 +139,22 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
 .dot-ok { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
 .dot-none { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--tx3); }
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+/* 미공포 관리 추가 스타일 */
+.unpo-store-header { gap:8px; flex-wrap:wrap; }
+.unpo-set-controls { display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+.unpo-set-memo input { background:var(--sur); border:1px solid var(--bd); border-radius:var(--r-sm); padding:3px 8px; font-size:12px; color:var(--tx2); width:180px; }
+.unpo-card-wrap { position:relative; }
+.card-note-badge { position:absolute; top:2px; right:2px; background:rgba(192,132,252,.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:3px; pointer-events:none; }
+.card-ctrl-bar { display:flex; gap:4px; margin-top:4px; }
+.card-ctrl-bar button { flex:1; padding:3px 0; font-size:10px; border-radius:3px; border:1px solid var(--bd2); background:var(--sur2); color:var(--tx2); cursor:pointer; }
+.card-ctrl-bar button:hover { color:var(--tx); border-color:var(--pk); }
+.note-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; align-items:center; justify-content:center; }
+.note-modal-bg.open { display:flex; }
+.note-modal { background:var(--sur); border:1px solid var(--bd2); border-radius:var(--r); padding:20px; width:320px; }
+.note-modal h4 { font-size:14px; font-weight:600; margin-bottom:12px; }
+.note-modal textarea { width:100%; min-height:80px; resize:vertical; }
+.note-modal .foot { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
 @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 #lock-screen {
   position:fixed; inset:0; background:var(--bg); z-index:9999;
@@ -296,6 +312,16 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
       </select>
     </div>
   </div>
+
+  <!-- 공유 그룹 관리 -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="justify-content:space-between">
+      <span>🔗 공유 그룹 <span class="text-muted text-sm" style="font-weight:400">(같은 미공포를 공유하는 판매처 — 카운트 중복 제거)</span></span>
+      <button class="btn btn-ghost btn-sm" onclick="openSharedModal()">+ 추가</button>
+    </div>
+    <div id="shared-group-list"></div>
+  </div>
+
   <div id="unpo-page-content"></div>
 </div>
 
@@ -492,12 +518,23 @@ code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 
         </div>
       </div>
       <div class="form-row">
-        <div><label>가격 설정 (비워두면 기본값 사용)</label>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px">
-            <div><label style="font-size:11px">PHOTOBOOK</label><input id="sm-p-phot" type="number" placeholder="기본값"></div>
-            <div><label style="font-size:11px">POCAALBUM</label><input id="sm-p-poca" type="number" placeholder="기본값"></div>
-            <div><label style="font-size:11px">ID PASS</label><input id="sm-p-id" type="number" placeholder="기본값"></div>
-            <div><label style="font-size:11px">INVENTORY</label><input id="sm-p-inv" type="number" placeholder="기본값"></div>
+        <div>
+          <label>판매 방식</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r-sm);font-size:13px">
+              <input type="radio" name="sm-pm" value="country" onchange="smUpdatePriceMode()"> 국가 기준 단가
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r-sm);font-size:13px">
+              <input type="radio" name="sm-pm" value="custom" onchange="smUpdatePriceMode()"> 앨범별 직접 설정
+            </label>
+          </div>
+        </div>
+      </div>
+      <div id="sm-custom-prices" style="display:none">
+        <div class="form-row">
+          <div>
+            <label style="font-size:12px;color:var(--tx3);margin-bottom:8px;display:block">단가 직접 설정 — <b>미판매</b> 체크 시 해당 앨범 숨김</label>
+            <div style="display:flex;flex-direction:column;gap:8px" id="sm-album-rows"></div>
           </div>
         </div>
       </div>
@@ -643,6 +680,7 @@ function renderAll() {
   renderDashboard();
   renderStoresTable();
   renderDistTable();
+  renderSharedGroups();
   renderUnpoPage();
   renderExport();
 }
@@ -705,11 +743,16 @@ function renderDashboard() {
 
 function countImgs(present) {
   let count = 0;
-  Object.values(STATE.unpoData).forEach(stores => {
-    Object.values(stores).forEach(sets => {
+  // shared 판매처 목록 (중복 카운트 방지)
+  const sharedSkip = new Set(
+    (STATE.shared || []).map(s => `${s.ak}|||${s.bn}`)
+  );
+  Object.entries(STATE.unpoData).forEach(([section, stores]) => {
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      if(sharedSkip.has(`${section}|||${storeName}`)) return;
       sets.forEach(s => {
         const cards = Array.isArray(s) ? s : (s.cards || []);
-        cards.forEach(c => { if(present ? !!c.img : !c.img) count++; });
+        cards.slice(0, 5).forEach(c => { if(present ? !!c.img : !c.img) count++; });
       });
     });
   });
@@ -763,47 +806,70 @@ function renderDistTable() {
 function renderUnpoPage() {
   const filter = document.getElementById('unpo-section-filter').value;
   const container = document.getElementById('unpo-page-content');
-  let html = '';
+  let h = '';
   Object.entries(STATE.unpoData).forEach(([section, stores]) => {
     if(filter && section !== filter) return;
-    html += `<div class="unpo-section">
+    h += `<div class="unpo-section">
       <div class="unpo-section-title">${SECTION_LABELS[section] || section}</div>`;
     Object.entries(stores).forEach(([storeName, sets]) => {
-      html += `<div class="unpo-store">
+      const esc = encodeURIComponent(storeName);
+      const isShared = (STATE.shared||[]).some(s => s.ak===section && s.bn===storeName);
+      const sharedSrc = isShared
+        ? (STATE.shared.find(s => s.ak===section && s.bn===storeName)?.sharedWith)
+        : null;
+      h += `<div class="unpo-store">
         <div class="unpo-store-header">
           <span class="unpo-store-name">${storeName}</span>
-          <span class="badge badge-gray">${sets.length}세트</span>
+          ${isShared ? `<span class="badge badge-warn" title="카운트 제외됨 (${sharedSrc?.bn||''}와 공유)">🔗 공유됨</span>` : `<span class="badge badge-gray">${sets.length}세트</span>`}
+          <button class="btn btn-ghost btn-sm" onclick="addUnpoSet('${section}','${esc}')">+ 세트 추가</button>
+          <button class="btn btn-err btn-sm" onclick="removeUnpoStore('${section}','${esc}')">판매처 제거</button>
         </div>
         <div class="unpo-sets">`;
       sets.forEach((s, si) => {
         const isFlat = Array.isArray(s);
         const cards  = isFlat ? s : (s.cards || []);
         const memo   = isFlat ? '' : (s.memo || '');
-        const label  = sets.length > 1 ? (memo || `Set ${si+1}`) : '';
         const members = cards.length === 6 ? MEMBERS_6 : MEMBERS_5;
-        html += `<div class="unpo-set">`;
-        if(label) html += `<div class="unpo-set-label">${label}</div>`;
-        html += `<div class="unpo-cards${cards.length===6?' six':''}">`;
+        h += `<div class="unpo-set">
+          <div class="unpo-set-controls">
+            <span class="unpo-set-label" style="margin:0">Set ${si+1}</span>
+            <input class="unpo-set-memo" style="background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 8px;font-size:12px;color:var(--tx2);width:180px"
+              placeholder="세트 메모 (예: 럭키드로우)" value="${memo}"
+              oninput="setUnpoMemo('${section}','${esc}',${si},this.value)">
+            ${cards.length===5
+              ? `<button class="btn btn-ghost btn-sm" onclick="setUnpoCardCount('${section}','${esc}',${si},6)">6장으로</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="setUnpoCardCount('${section}','${esc}',${si},5)">5장으로</button>`}
+            ${sets.length > 1 ? `<button class="btn btn-err btn-sm" onclick="removeUnpoSet('${section}','${esc}',${si})">세트 삭제</button>` : ''}
+          </div>
+          <div class="unpo-cards${cards.length===6?' six':''}">`;
         cards.forEach((card, ci) => {
           const member = members[ci] || `card${ci}`;
           const memberKo = MEMBER_KO[member] || member;
           const img = card.img;
-          html += `<div class="unpo-card" title="${memberKo} — 클릭하여 이미지 업로드">
-            ${img
-              ? `<img src="${img}" alt="${memberKo}" onerror="this.style.display='none'">`
-              : `<div class="no-img"><span>📷</span><span>${memberKo}</span></div>`}
-            <div class="member-label">${memberKo}</div>
-            <div class="upload-hint">⬆</div>
-            <input type="file" accept="image/*" onchange="uploadUnpoImg(event,'${section}','${storeName}',${si},${ci})">
+          const note = card.note || '';
+          h += `<div class="unpo-card-wrap">
+            <div class="unpo-card" title="${memberKo}">
+              ${img
+                ? `<img src="${img}" alt="${memberKo}" onerror="this.style.display='none'">`
+                : `<div class="no-img"><span>📷</span><span>${memberKo}</span></div>`}
+              <div class="member-label">${memberKo}</div>
+              <div class="upload-hint">⬆</div>
+              <input type="file" accept="image/*" onchange="uploadUnpoImg(event,'${section}','${esc}',${si},${ci})">
+              ${note ? `<div class="card-note-badge">뒷면</div>` : ''}
+            </div>
+            <div class="card-ctrl-bar">
+              <button onclick="openNoteModal('${section}','${esc}',${si},${ci},'${note.replace(/'/g,"\'")}')">뒷면</button>
+              ${img ? `<button onclick="clearUnpoImg('${section}','${esc}',${si},${ci})">삭제</button>` : ''}
+            </div>
           </div>`;
         });
-        html += `</div></div>`;
+        h += `</div></div>`;
       });
-      html += `</div></div>`;
+      h += `</div></div>`;
     });
-    html += `</div>`;
+    h += `</div>`;
   });
-  container.innerHTML = html || '<div class="empty">표시할 데이터가 없습니다</div>';
+  container.innerHTML = h || '<div class="empty">표시할 데이터가 없습니다</div>';
 }
 
 function renderExport() {
@@ -842,13 +908,14 @@ function openStoreModal(editIdx = null) {
     document.getElementById('sm-dom-ship').value   = s.defDomShip || 0;
     document.getElementById('sm-ovs-ship').value   = s.defOvsShip || 0;
     document.getElementById('sm-lucky').checked    = s.offlineLuckyDraw || false;
-    const cp = s.customPrices || {};
-    document.getElementById('sm-p-phot').value = cp.PHOTOBOOK ?? '';
-    document.getElementById('sm-p-poca').value = cp.POCAALBUM ?? '';
-    document.getElementById('sm-p-id').value   = cp.ID_PASS   ?? '';
-    document.getElementById('sm-p-inv').value  = cp.INVENTORY ?? '';
+    // priceMode 설정
+    const pm = s.priceMode || 'country';
+    document.querySelector(`input[name="sm-pm"][value="${pm === 'nosale' ? 'custom' : pm}"]`).checked = true;
+    smUpdatePriceMode(s.customPrices || {});
   } else {
-    ['sm-name','sm-start','sm-end','sm-off-start','sm-off-end','sm-off-addr','sm-off-hours','sm-off-note','sm-url','sm-memo','sm-p-phot','sm-p-poca','sm-p-id','sm-p-inv'].forEach(id => document.getElementById(id).value = '');
+    document.querySelector('input[name="sm-pm"][value="country"]').checked = true;
+    smUpdatePriceMode({});
+    ['sm-name','sm-start','sm-end','sm-off-start','sm-off-end','sm-off-addr','sm-off-hours','sm-off-note','sm-url','sm-memo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('sm-vc').value = 'false';
     document.getElementById('sm-dom-ship').value = 0;
     document.getElementById('sm-ovs-ship').value = 0;
@@ -861,20 +928,23 @@ function editStore(i) { openStoreModal(i); }
 
 function saveStore() {
   const idx = document.getElementById('sm-edit-idx').value;
-  const customPrices = {
-    PHOTOBOOK: parseNum('sm-p-phot'),
-    POCAALBUM: parseNum('sm-p-poca'),
-    ID_PASS:   parseNum('sm-p-id'),
-    INVENTORY: parseNum('sm-p-inv'),
-  };
-  const hasCustom = Object.values(customPrices).some(v => v !== null);
+  const pm = document.querySelector('input[name="sm-pm"]:checked')?.value || 'country';
+  const customPrices = {};
+  if(pm === 'custom') {
+    ['PHOTOBOOK','POCAALBUM','ID_PASS','INVENTORY'].forEach(k => {
+      const chk = document.getElementById(`sm-chk-${k}`);
+      if(chk && chk.checked) { customPrices[k] = null; return; } // 미판매
+      const v = parseFloat(document.getElementById(`sm-price-${k}`)?.value);
+      customPrices[k] = isNaN(v) ? null : v;
+    });
+  }
   const store = {
     name:          document.getElementById('sm-name').value.trim(),
     distId:        document.getElementById('sm-dist').value,
     country:       document.getElementById('sm-country').value,
     unpoPerk:      document.getElementById('sm-perk').value || null,
-    priceMode:     hasCustom ? 'custom' : 'default',
-    customPrices:  hasCustom ? customPrices : null,
+    priceMode:     pm,
+    customPrices:  pm === 'custom' ? customPrices : null,
     purchaseStart: document.getElementById('sm-start').value,
     purchaseEnd:   document.getElementById('sm-end').value,
     purchaseEndTxt:'',
@@ -894,31 +964,89 @@ function saveStore() {
     id:            idx !== '' ? STATE.stores[idx].id : 'cs' + Date.now(),
   };
   if(!store.name) { alert('판매처명을 입력하세요'); return; }
-  if(idx !== '') STATE.stores[parseInt(idx)] = store;
+  const isNew = idx === '';
+  if(!isNew) STATE.stores[parseInt(idx)] = store;
   else STATE.stores.push(store);
+  // 미공포 자동 동기화: 새 판매처이거나 unpoPerk 있는 경우 빈 항목 생성
+  syncUnpoForStore(store, isNew);
   STATE.dirty = true;
   STATE.pendingDataJs = true;
   updateSaveBar();
   closeModal('store-modal');
   renderStoresTable();
+  renderUnpoPage();
   renderDashboard();
   renderExport();
 }
 
 function deleteStore(i) {
-  if(!confirm(`"${STATE.stores[i].name}" 판매처를 삭제하시겠습니까?`)) return;
+  const store = STATE.stores[i];
+  if(!confirm(`"${store.name}" 판매처를 삭제하시겠습니까?`)) return;
+  removeUnpoForStore(store);
   STATE.stores.splice(i, 1);
   STATE.dirty = true;
   STATE.pendingDataJs = true;
   updateSaveBar();
   renderStoresTable();
+  renderUnpoPage();
   renderDashboard();
   renderExport();
 }
 
 function parseNum(id) {
-  const v = document.getElementById(id).value;
-  return v === '' ? null : Number(v);
+  const v = document.getElementById(id)?.value;
+  return (v == null || v === '') ? null : Number(v);
+}
+
+// 앨범별 가격/미판매 UI 동적 생성
+const ALBUM_KEYS = [
+  {k:'PHOTOBOOK', lb:'PHOTOBOOK'},
+  {k:'POCAALBUM', lb:'POCAALBUM'},
+  {k:'ID_PASS',   lb:'ID PASS'},
+  {k:'INVENTORY', lb:'INVENTORY'},
+];
+
+function smUpdatePriceMode(existingPrices) {
+  const pm = document.querySelector('input[name="sm-pm"]:checked')?.value;
+  const box = document.getElementById('sm-custom-prices');
+  const rows = document.getElementById('sm-album-rows');
+  if(!box || !rows) return;
+
+  if(pm !== 'custom') { box.style.display = 'none'; return; }
+  box.style.display = '';
+
+  // 현재 편집 중인 store의 customPrices 가져오기
+  const cp = existingPrices !== undefined ? existingPrices
+    : (() => {
+        const idx = document.getElementById('sm-edit-idx').value;
+        if(idx !== '') return STATE.stores[parseInt(idx)]?.customPrices || {};
+        return {};
+      })();
+
+  rows.innerHTML = ALBUM_KEYS.map(a => {
+    const isNosale = cp && a.k in cp && cp[a.k] == null;
+    const val = (cp && cp[a.k] != null) ? cp[a.k] : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sur2);border-radius:var(--r-sm);border:1px solid var(--bd)">
+      <span style="font-size:13px;font-weight:500;min-width:90px">${a.lb}</span>
+      <div id="sm-price-wrap-${a.k}" style="${isNosale ? 'display:none;' : ''}flex:1">
+        <input type="number" step="0.01" id="sm-price-${a.k}" value="${val}"
+          placeholder="단가 입력" style="width:100%">
+      </div>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;white-space:nowrap">
+        <input type="checkbox" id="sm-chk-${a.k}" ${isNosale ? 'checked' : ''}
+          onchange="smToggleNosale('${a.k}')">
+        미판매
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function smToggleNosale(k) {
+  const chk = document.getElementById(`sm-chk-${k}`);
+  const wrap = document.getElementById(`sm-price-wrap-${k}`);
+  if(!chk || !wrap) return;
+  wrap.style.display = chk.checked ? 'none' : '';
+  if(!chk.checked) setTimeout(() => document.getElementById(`sm-price-${k}`)?.focus(), 50);
 }
 
 // ═══════════════════════════════════════════════
@@ -971,6 +1099,244 @@ function deleteDist(i) {
   updateSaveBar();
   renderDistTable();
   renderExport();
+}
+
+// ═══════════════════════════════════════════════
+// UNPO DATA 관리
+// ═══════════════════════════════════════════════
+
+function getUnpoSets(section, storeName) {
+  const name = decodeURIComponent(storeName);
+  if(!STATE.unpoData[section]) STATE.unpoData[section] = {};
+  if(!STATE.unpoData[section][name]) STATE.unpoData[section][name] = [];
+  return STATE.unpoData[section][name];
+}
+
+function makeBlankSet(n=5) {
+  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','group'] : ['yejun','noa','bambi','eunho','hamin'];
+  return { cards: members.map(m => ({ img: null, note: '', owned: false })), memo: '' };
+}
+
+// 판매처 저장 시 UNPO_DATA 자동 동기화
+function syncUnpoForStore(store, isNew) {
+  const perk = store.unpoPerk;
+  const name = store.name;
+  if(!perk) return;
+  if(!STATE.unpoData[perk]) STATE.unpoData[perk] = {};
+  if(isNew && !STATE.unpoData[perk][name]) {
+    STATE.unpoData[perk][name] = [makeBlankSet(5)];
+  }
+}
+
+// 판매처 삭제 시 UNPO_DATA에서도 제거
+function removeUnpoForStore(store) {
+  const perk = store.unpoPerk;
+  const name = store.name;
+  if(!perk || !STATE.unpoData[perk]) return;
+  if(STATE.unpoData[perk][name]) {
+    if(!confirm(`"${name}" 미공포 데이터도 함께 삭제하시겠습니까?`)) return;
+    delete STATE.unpoData[perk][name];
+  }
+}
+
+// 세트 추가
+function addUnpoSet(section, storeName) {
+  const name = decodeURIComponent(storeName);
+  const sets = getUnpoSets(section, name);
+  sets.push(makeBlankSet(5));
+  STATE.dirty = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 세트 삭제
+function removeUnpoSet(section, storeName, si) {
+  const name = decodeURIComponent(storeName);
+  const sets = getUnpoSets(section, name);
+  if(sets.length <= 1) { alert('마지막 세트는 삭제할 수 없습니다'); return; }
+  if(!confirm(`Set ${si+1}을 삭제하시겠습니까?`)) return;
+  sets.splice(si, 1);
+  STATE.dirty = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 판매처 미공포 항목 제거
+function removeUnpoStore(section, storeName) {
+  const name = decodeURIComponent(storeName);
+  if(!confirm(`"${name}" 미공포 항목을 제거하시겠습니까? (판매처는 유지됩니다)`)) return;
+  if(STATE.unpoData[section]) delete STATE.unpoData[section][name];
+  STATE.dirty = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 카드 수 변경 (5↔6)
+function setUnpoCardCount(section, storeName, si, n) {
+  const name = decodeURIComponent(storeName);
+  const sets = getUnpoSets(section, name);
+  const s = sets[si];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  const memo = Array.isArray(s) ? '' : (s.memo || '');
+  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','group'] : ['yejun','noa','bambi','eunho','hamin'];
+  
+  // 기존 카드 img/note 보존
+  const newCards = members.map((m, i) => {
+    const existing = cards[i] || {};
+    return { img: existing.img || null, note: existing.note || '', owned: existing.owned || false };
+  });
+  sets[si] = { cards: newCards, memo };
+  STATE.dirty = true;
+  updateSaveBar();
+  renderUnpoPage();
+}
+
+// 세트 메모 변경
+function setUnpoMemo(section, storeName, si, value) {
+  const name = decodeURIComponent(storeName);
+  const sets = getUnpoSets(section, name);
+  const s = sets[si];
+  if(Array.isArray(s)) {
+    sets[si] = { cards: s, memo: value };
+  } else {
+    s.memo = value;
+  }
+  STATE.dirty = true;
+  updateSaveBar();
+}
+
+// 이미지 삭제
+function clearUnpoImg(section, storeName, si, ci) {
+  const name = decodeURIComponent(storeName);
+  const sets = getUnpoSets(section, name);
+  const s = sets[si];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  if(!confirm('이 카드 이미지를 삭제하시겠습니까?')) return;
+  if(cards[ci]) cards[ci].img = null;
+  // 대기열에서도 제거
+  const sec = section;
+  Object.keys(STATE.pendingImages).forEach(k => {
+    if(k.includes(name.toLowerCase().replace(/[^a-z0-9]/g,'_'))) delete STATE.pendingImages[k];
+  });
+  STATE.dirty = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 뒷면 노트 모달
+let _noteCtx = null;
+function openNoteModal(section, storeName, si, ci, currentNote) {
+  _noteCtx = { section, storeName: decodeURIComponent(storeName), si, ci };
+  document.getElementById('note-modal-label').textContent =
+    `${decodeURIComponent(storeName)} / Set ${si+1} / 카드 ${ci+1}`;
+  document.getElementById('note-modal-text').value = currentNote || '';
+  document.getElementById('note-modal').classList.add('open');
+}
+function closeNoteModal() {
+  document.getElementById('note-modal').classList.remove('open');
+  _noteCtx = null;
+}
+function saveNote() {
+  if(!_noteCtx) return;
+  const { section, storeName, si, ci } = _noteCtx;
+  const val = document.getElementById('note-modal-text').value;
+  const sets = getUnpoSets(section, storeName);
+  const s = sets[si];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  if(cards[ci]) cards[ci].note = val;
+  STATE.dirty = true;
+  updateSaveBar();
+  closeNoteModal();
+  renderUnpoPage();
+}
+
+// note 모달 배경 클릭 닫기
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('note-modal')?.addEventListener('click', e => {
+    if(e.target.id === 'note-modal') closeNoteModal();
+  });
+});
+
+// ═══════════════════════════════════════════════
+// 공유 그룹 관리 (UNPO_SHARED)
+// ═══════════════════════════════════════════════
+
+function renderSharedGroups() {
+  const el = document.getElementById('shared-group-list');
+  if(!el) return;
+  const shared = STATE.shared || [];
+  if(!shared.length) {
+    el.innerHTML = '<div class="empty" style="padding:12px">공유 그룹이 없습니다</div>';
+    return;
+  }
+  el.innerHTML = shared.map((g, i) => `
+    <div class="flex" style="padding:8px 0;border-bottom:1px solid var(--bd)">
+      <span class="badge badge-info">${g.ak}</span>
+      <span style="font-weight:600">${g.bn}</span>
+      <span style="color:var(--tx3)">→ 공유됨</span>
+      <span class="badge badge-pk">${g.sharedWith?.ak || ''}</span>
+      <span style="font-weight:600">${g.sharedWith?.bn || ''}</span>
+      ${g.label ? `<span class="tag">${g.label}</span>` : ''}
+      <button class="btn btn-err btn-sm" style="margin-left:auto" onclick="removeSharedGroup(${i})">삭제</button>
+    </div>`).join('');
+}
+
+function openSharedModal() {
+  // 판매처 목록 채우기
+  renderSharedStoreOptions('sg-src-store', document.getElementById('sg-src-section').value);
+  renderSharedStoreOptions('sg-dst-store', document.getElementById('sg-dst-section').value);
+  document.getElementById('sg-label').value = '';
+  document.getElementById('shared-modal').classList.add('open');
+}
+
+function renderSharedStoreOptions(selectId, section) {
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const stores = Object.keys(STATE.unpoData[section] || {});
+  sel.innerHTML = '<option value="">판매처 선택</option>' +
+    stores.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function saveSharedGroup() {
+  const srcSection = document.getElementById('sg-src-section').value;
+  const srcStore   = document.getElementById('sg-src-store').value;
+  const dstSection = document.getElementById('sg-dst-section').value;
+  const dstStore   = document.getElementById('sg-dst-store').value;
+  const label      = document.getElementById('sg-label').value.trim();
+
+  if(!srcStore || !dstStore) { alert('판매처를 선택하세요'); return; }
+  if(srcSection === dstSection && srcStore === dstStore) { alert('같은 판매처입니다'); return; }
+
+  // 공유됨(dst)이 카운트에서 제외됨
+  // 원본 형식: {ak: dstSection, bn: dstStore, sharedWith: {ak: srcSection, bn: srcStore}}
+  if(!STATE.shared) STATE.shared = [];
+  STATE.shared.push({
+    ak: dstSection,
+    bn: dstStore,
+    sharedWith: { ak: srcSection, bn: srcStore },
+    label: label || undefined,
+  });
+
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  closeModal('shared-modal');
+  renderSharedGroups();
+  renderDashboard();
+}
+
+function removeSharedGroup(i) {
+  if(!confirm('이 공유 그룹을 삭제하시겠습니까?')) return;
+  STATE.shared.splice(i, 1);
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  renderSharedGroups();
+  renderDashboard();
 }
 
 // ═══════════════════════════════════════════════
@@ -1345,6 +1711,66 @@ if(sessionStorage.getItem('admin_unlocked') === '1') {
 }
 // 아니면 비밀번호 입력 화면이 먼저 뜨고, checkPw() 통과 후 init() 실행
 </script>
+<!-- ── 공유 그룹 모달 ── -->
+<div class="modal-bg" id="shared-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>🔗 공유 그룹 추가</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('shared-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-muted" style="margin-bottom:16px">
+        같은 미공포 이미지를 공유하는 판매처를 지정합니다.<br>
+        <b>공유됨</b>으로 지정된 판매처는 총 카운트에서 제외됩니다.
+      </p>
+      <div class="form-row cols-2">
+        <div>
+          <label>원본 판매처 (섹션)</label>
+          <select id="sg-src-section" onchange="renderSharedStoreOptions('sg-src-store', this.value)" style="margin-bottom:6px">
+            <option value="INVENTORY">INVENTORY</option>
+            <option value="PHOTOBOOK">PHOTOBOOK</option>
+            <option value="ID_PASS" selected>ID_PASS</option>
+            <option value="POCAALBUM">POCAALBUM</option>
+          </select>
+          <select id="sg-src-store"><option>판매처 선택</option></select>
+        </div>
+        <div>
+          <label>공유 대상 (섹션)</label>
+          <select id="sg-dst-section" onchange="renderSharedStoreOptions('sg-dst-store', this.value)" style="margin-bottom:6px">
+            <option value="INVENTORY">INVENTORY</option>
+            <option value="PHOTOBOOK">PHOTOBOOK</option>
+            <option value="ID_PASS">ID_PASS</option>
+            <option value="POCAALBUM" selected>POCAALBUM</option>
+          </select>
+          <select id="sg-dst-store"><option>판매처 선택</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label>그룹 메모 (선택)</label>
+          <input id="sg-label" placeholder="예: ASTERUM 433-10 (십카페럭드)">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('shared-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveSharedGroup()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 뒷면(note) 편집 모달 ── -->
+<div class="note-modal-bg" id="note-modal">
+  <div class="note-modal">
+    <h4>📝 뒷면 텍스트 편집</h4>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:8px" id="note-modal-label"></div>
+    <textarea id="note-modal-text" placeholder="뒷면에 표시할 텍스트 (예: 사인, 스탬프 등)"></textarea>
+    <div class="foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeNoteModal()">취소</button>
+      <button class="btn btn-p btn-sm" onclick="saveNote()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── 저장 바 ── -->
 <div id="save-bar">
   <div class="save-count">
