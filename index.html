@@ -507,7 +507,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 <script>
 // Caligo Pt.2 - 판매처 · 배급사 데이터
 // 자동 생성 - 수동 편집하거나 admin.html에서 관리하세요
-// Last updated: 2026-04-13
+// Last updated: 2026-04-14
 
 var DISTRIBUTORS = [
   {
@@ -640,24 +640,24 @@ var STORES = [
     "country": "KR",
     "unpoPerk": "POCAALBUM",
     "priceMode": "country",
-    "customPrices": {},
-    "purchaseStart": "",
-    "purchaseEnd": "",
+    "customPrices": null,
+    "purchaseStart": "2026-04-14T10:30",
+    "purchaseEnd": "2026-04-19T14:00",
     "purchaseEndTxt": "",
+    "defDeliveryDate": "",
     "offlineStart": "2026-04-14",
     "offlineEnd": "2026-04-19",
+    "offlineHours": "(화-목) 10:30 - 20:00 ; (금-일) 10:30 - 20:30",
+    "offlineAddress": "더현대서울 5F",
     "offlineNote": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80e1-b7b5-d07592ac0481\n모든 버전 구매시 더현대럭키드로우 포토카드 5종중 랜덤 증정",
+    "offlineLuckyDraw": true,
     "defDomShip": 0,
     "defOvsShip": 0,
     "url": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80e1-b7b5-d07592ac0481",
-    "custom": true,
-    "id": "cs1774546314667",
-    "defDeliveryDate": "",
-    "offlineHours": "(화-목) 10:30 - 20:00 ; (금-일) 10:30 - 20:30",
-    "offlineAddress": "더현대서울 5F",
-    "offlineLuckyDraw": true,
     "videocall": false,
-    "memo": ""
+    "memo": "",
+    "custom": true,
+    "id": "cs1774546314667"
   },
   {
     "id": "s3",
@@ -1642,6 +1642,38 @@ var STORES = [
     "memo": "",
     "custom": true,
     "id": "cs1776085185495"
+  },
+  {
+    "name": "VLASTSHOP (2차)",
+    "distId": "dcs1774543391747",
+    "country": "KR",
+    "unpoPerk": "POCAALBUM",
+    "unpoSets": 1,
+    "unpoBack": false,
+    "priceMode": "custom",
+    "customPrices": {
+      "PHOTOBOOK": null,
+      "POCAALBUM": 8200,
+      "ID_PASS": null,
+      "INVENTORY": null
+    },
+    "purchaseStart": "2026-04-14T11:00",
+    "purchaseEnd": "2026-04-20T23:00",
+    "purchaseEndTxt": "",
+    "defDeliveryDate": "",
+    "offlineStart": "",
+    "offlineEnd": "",
+    "offlineHours": "",
+    "offlineAddress": "",
+    "offlineNote": "",
+    "offlineLuckyDraw": false,
+    "defDomShip": 0,
+    "defOvsShip": 0,
+    "url": "https://vlastshop.com/product/[DRIVING-TALK-EVENT]-PLAVE-4th-Mini-Album-/'Caligo-Pt.2/'-(POCAALBUM-Ver._5%EC%A2%85-%EC%A4%91-%EB%9E%9C%EB%8D%A4%EB%B0%9C%EC%86%A1)/305/category/55/display/1/",
+    "videocall": true,
+    "memo": "영통발표: 4/21 ; 드라이빙토크회: 5/31",
+    "custom": true,
+    "id": "cs1776171151326"
   }
 ];
 
@@ -1729,7 +1761,14 @@ var SCHEDULE = [
 
 // ─── 이미지 공유 그룹 (같은 미공포를 공유하는 판매처) ───
 var UNPO_SHARED = [
-  {ak:'POCAALBUM', bn:'길보드',    sharedWith:{ak:'ID_PASS',   bn:'무신사'}},
+  {
+    "ak": "POCAALBUM",
+    "bn": "길보드",
+    "sharedWith": {
+      "ak": "ID_PASS",
+      "bn": "무신사"
+    }
+  }
 ];
 
 
@@ -2014,6 +2053,26 @@ var UNPO_DATA = {
             "img": null,
             "note": "",
             "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
           }
         ],
         "memo": "ASTERUM 433-10 (십카페럭드), 길보드와 동일"
@@ -2048,7 +2107,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/id_pass/hello82_set1_group.webp",
+            "img": "./images/id_pass/hello82_set1_back.webp",
             "note": "",
             "owned": false
           }
@@ -2083,7 +2142,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/id_pass/hello82_set2_group.webp",
+            "img": "./images/id_pass/hello82_set2_back.webp",
             "note": "",
             "owned": false
           }
@@ -2119,7 +2178,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/id_pass/animate_group.webp",
+          "img": "./images/id_pass/animate_back.webp",
           "note": "",
           "owned": false
         }
@@ -2153,7 +2212,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/id_pass/hmv_group.webp",
+          "img": "./images/id_pass/hmv_back.webp",
           "note": "",
           "owned": false
         }
@@ -2216,7 +2275,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/id_pass/towerrecords_group.webp",
+          "img": "./images/id_pass/towerrecords_back.webp",
           "note": "",
           "owned": false
         }
@@ -2281,7 +2340,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/pocaalbum/willmusic_group.webp",
+          "img": "./images/pocaalbum/willmusic_back.webp",
           "note": "",
           "owned": false
         }
@@ -2315,7 +2374,7 @@ var UNPO_DATA = {
           "owned": false
         },
         {
-          "img": "./images/pocaalbum/makestar_group.webp",
+          "img": "./images/pocaalbum/makestar_back.webp",
           "note": "",
           "owned": false
         }
@@ -2357,6 +2416,26 @@ var UNPO_DATA = {
             "img": null,
             "note": "",
             "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
           }
         ],
         "memo": "ASTERUM 433-10 (십카페럭드), 무신사 세트2와 동일"
@@ -2392,13 +2471,36 @@ var UNPO_DATA = {
       ]
     ],
     "더현대서울": [
-      [
-        {
-          "img": null,
-          "note": "",
-          "owned": false
-        }
-      ]
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": ""
+      }
     ],
     "케타포": [
       {
@@ -2429,7 +2531,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/pocaalbum/ketapo_set1_group.webp",
+            "img": "./images/pocaalbum/ketapo_set1_back.webp",
             "note": "",
             "owned": false
           }
@@ -2464,7 +2566,7 @@ var UNPO_DATA = {
             "owned": false
           },
           {
-            "img": "./images/pocaalbum/ketapo_set2_group.webp",
+            "img": "./images/pocaalbum/ketapo_set2_back.webp",
             "note": "",
             "owned": false
           }
@@ -2497,6 +2599,38 @@ var UNPO_DATA = {
           },
           {
             "img": "./images/pocaalbum/youtube_hamin.webp",
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": ""
+      }
+    ],
+    "VLASTSHOP (2차)": [
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
             "note": "",
             "owned": false
           }
