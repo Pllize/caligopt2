@@ -595,8 +595,8 @@ const SECTION_LABELS = {
   ID_PASS: 'ID PASS', POCAALBUM: 'POCAALBUM'
 };
 const MEMBERS_5 = ['yejun','noa','bambi','eunho','hamin'];
-const MEMBERS_6 = [...MEMBERS_5, 'group'];
-const MEMBER_KO  = {bambi:'밤비',yejun:'예준',eunho:'은호',hamin:'하민',noa:'노아',group:'그룹'};
+const MEMBERS_6 = [...MEMBERS_5, 'back'];
+const MEMBER_KO  = {bambi:'밤비',yejun:'예준',eunho:'은호',hamin:'하민',noa:'노아',back:'뒷면',group:'뒷면'};
 
 // ═══════════════════════════════════════════════
 // 비밀번호 잠금
@@ -841,8 +841,10 @@ function renderUnpoPage() {
               : `<button class="btn btn-ghost btn-sm" onclick="setUnpoCardCount('${section}','${esc}',${si},5)">5장으로</button>`}
             ${sets.length > 1 ? `<button class="btn btn-err btn-sm" onclick="removeUnpoSet('${section}','${esc}',${si})">세트 삭제</button>` : ''}
           </div>
-          <div class="unpo-cards${cards.length===6?' six':''}">`;
-        cards.forEach((card, ci) => {
+          <div class="unpo-cards">`;
+        // 앞면 5장 렌더링
+        const frontCards = cards.slice(0, 5);
+        frontCards.forEach((card, ci) => {
           const member = members[ci] || `card${ci}`;
           const memberKo = MEMBER_KO[member] || member;
           const img = card.img;
@@ -855,15 +857,42 @@ function renderUnpoPage() {
               <div class="member-label">${memberKo}</div>
               <div class="upload-hint">⬆</div>
               <input type="file" accept="image/*" onchange="uploadUnpoImg(event,'${section}','${esc}',${si},${ci})">
-              ${note ? `<div class="card-note-badge">뒷면</div>` : ''}
+              ${note ? `<div class="card-note-badge">📝</div>` : ''}
             </div>
             <div class="card-ctrl-bar">
-              <button onclick="openNoteModal('${section}','${esc}',${si},${ci},'${note.replace(/'/g,"\'")}')">뒷면</button>
-              ${img ? `<button onclick="clearUnpoImg('${section}','${esc}',${si},${ci})">삭제</button>` : ''}
+              <button onclick="openNoteModal('${section}','${esc}',${si},${ci},'${note.replace(/'/g,"\'")}')">📝</button>
+              ${img ? `<button onclick="clearUnpoImg('${section}','${esc}',${si},${ci})">✕</button>` : ''}
             </div>
           </div>`;
         });
-        h += `</div></div>`;
+        h += `</div>`;
+        // 뒷면 카드 (6번째, 있을 때만 표시)
+        if(cards.length >= 6) {
+          const backCard = cards[5];
+          const backImg = backCard?.img;
+          const backNote = backCard?.note || '';
+          h += `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd)">
+            <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;font-weight:600">↩ 뒷면 카드</div>
+            <div class="flex" style="gap:8px;align-items:flex-start">
+              <div class="unpo-card-wrap">
+                <div class="unpo-card" title="뒷면" style="width:60px">
+                  ${backImg
+                    ? `<img src="${backImg}" alt="뒷면" onerror="this.style.display='none'">`
+                    : `<div class="no-img"><span>↩</span><span>뒷면</span></div>`}
+                  <div class="member-label">뒷면</div>
+                  <div class="upload-hint">⬆</div>
+                  <input type="file" accept="image/*" onchange="uploadUnpoImg(event,'${section}','${esc}',${si},5)">
+                </div>
+                <div class="card-ctrl-bar">
+                  <button onclick="openNoteModal('${section}','${esc}',${si},5,'${backNote.replace(/'/g,"\'")}')">📝</button>
+                  ${backImg ? `<button onclick="clearUnpoImg('${section}','${esc}',${si},5)">✕</button>` : ''}
+                </div>
+              </div>
+              ${backNote ? `<div style="font-size:12px;color:var(--tx2);padding-top:4px">${backNote}</div>` : ''}
+            </div>
+          </div>`;
+        }
+        h += `</div>`;
       });
       h += `</div></div>`;
     });
@@ -1113,7 +1142,7 @@ function getUnpoSets(section, storeName) {
 }
 
 function makeBlankSet(n=5) {
-  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','group'] : ['yejun','noa','bambi','eunho','hamin'];
+  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','back'] : ['yejun','noa','bambi','eunho','hamin'];
   return { cards: members.map(m => ({ img: null, note: '', owned: false })), memo: '' };
 }
 
@@ -1181,7 +1210,7 @@ function setUnpoCardCount(section, storeName, si, n) {
   const s = sets[si];
   const cards = Array.isArray(s) ? s : (s.cards || []);
   const memo = Array.isArray(s) ? '' : (s.memo || '');
-  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','group'] : ['yejun','noa','bambi','eunho','hamin'];
+  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','back'] : ['yejun','noa','bambi','eunho','hamin'];
   
   // 기존 카드 img/note 보존
   const newCards = members.map((m, i) => {
@@ -1265,62 +1294,132 @@ document.addEventListener('DOMContentLoaded', () => {
 // 공유 그룹 관리 (UNPO_SHARED)
 // ═══════════════════════════════════════════════
 
+// STATE.sharedGroups = [{ label, src:{ak,bn}, targets:[{ak,bn},...] }]
+// UNPO_SHARED (app.js 형식) = [{ak,bn,sharedWith:{ak,bn}}, ...] 로 평탄화
+
+function getSharedGroups() {
+  if(!STATE.sharedGroups) {
+    // 기존 STATE.shared (평탄화 형식)을 그룹 형식으로 변환
+    STATE.sharedGroups = [];
+    if(STATE.shared && STATE.shared.length) {
+      STATE.shared.forEach(s => {
+        const src = s.sharedWith;
+        if(!src) return;
+        const existing = STATE.sharedGroups.find(g =>
+          g.src.ak === src.ak && g.src.bn === src.bn
+        );
+        if(existing) {
+          if(!existing.targets.some(t => t.ak === s.ak && t.bn === s.bn))
+            existing.targets.push({ ak: s.ak, bn: s.bn });
+        } else {
+          STATE.sharedGroups.push({
+            label: s.label || '',
+            src: { ak: src.ak, bn: src.bn },
+            targets: [{ ak: s.ak, bn: s.bn }],
+          });
+        }
+      });
+    }
+  }
+  return STATE.sharedGroups;
+}
+
+function flattenSharedGroups() {
+  // sharedGroups → UNPO_SHARED 평탄화 (app.js 형식)
+  const flat = [];
+  (STATE.sharedGroups || []).forEach(g => {
+    g.targets.forEach(t => {
+      flat.push({ ak: t.ak, bn: t.bn, sharedWith: { ak: g.src.ak, bn: g.src.bn }, label: g.label || undefined });
+    });
+  });
+  STATE.shared = flat;
+  return flat;
+}
+
 function renderSharedGroups() {
   const el = document.getElementById('shared-group-list');
   if(!el) return;
-  const shared = STATE.shared || [];
-  if(!shared.length) {
+  const groups = getSharedGroups();
+  if(!groups.length) {
     el.innerHTML = '<div class="empty" style="padding:12px">공유 그룹이 없습니다</div>';
     return;
   }
-  el.innerHTML = shared.map((g, i) => `
-    <div class="flex" style="padding:8px 0;border-bottom:1px solid var(--bd)">
-      <span class="badge badge-info">${g.ak}</span>
-      <span style="font-weight:600">${g.bn}</span>
-      <span style="color:var(--tx3)">→ 공유됨</span>
-      <span class="badge badge-pk">${g.sharedWith?.ak || ''}</span>
-      <span style="font-weight:600">${g.sharedWith?.bn || ''}</span>
-      ${g.label ? `<span class="tag">${g.label}</span>` : ''}
-      <button class="btn btn-err btn-sm" style="margin-left:auto" onclick="removeSharedGroup(${i})">삭제</button>
+  el.innerHTML = groups.map((g, i) => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--bd)">
+      <div class="flex" style="margin-bottom:6px">
+        ${g.label ? `<span class="tag" style="font-weight:600">${g.label}</span>` : ''}
+        <span class="badge badge-ok">원본: ${g.src.ak} › ${g.src.bn}</span>
+        <button class="btn btn-err btn-sm" style="margin-left:auto" onclick="removeSharedGroup(${i})">삭제</button>
+      </div>
+      <div class="flex" style="flex-wrap:wrap;gap:4px">
+        <span class="text-sm text-muted">공유됨:</span>
+        ${g.targets.map((t, ti) => `
+          <span class="badge badge-warn" style="cursor:pointer" onclick="removeSharedTarget(${i},${ti})" title="클릭하여 제거">
+            ${t.ak} › ${t.bn} ✕
+          </span>`).join('')}
+        <button class="btn btn-ghost btn-sm" onclick="addTargetToGroup(${i})">+ 대상 추가</button>
+      </div>
     </div>`).join('');
 }
 
 function openSharedModal() {
-  // 판매처 목록 채우기
-  renderSharedStoreOptions('sg-src-store', document.getElementById('sg-src-section').value);
-  renderSharedStoreOptions('sg-dst-store', document.getElementById('sg-dst-section').value);
+  getSharedGroups(); // 초기화
   document.getElementById('sg-label').value = '';
+  sgRenderSrcStore();
+  sgRenderDstCandidates();
   document.getElementById('shared-modal').classList.add('open');
 }
 
-function renderSharedStoreOptions(selectId, section) {
-  const sel = document.getElementById(selectId);
-  if(!sel) return;
+function sgRenderSrcStore() {
+  const section = document.getElementById('sg-src-section').value;
+  const sel = document.getElementById('sg-src-store');
   const stores = Object.keys(STATE.unpoData[section] || {});
   sel.innerHTML = '<option value="">판매처 선택</option>' +
     stores.map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
+function sgRenderDstCandidates() {
+  const section = document.getElementById('sg-dst-section').value;
+  const el = document.getElementById('sg-dst-list');
+  const stores = Object.keys(STATE.unpoData[section] || {});
+  if(!stores.length) { el.innerHTML = '<div class="text-muted text-sm">판매처 없음</div>'; return; }
+  el.innerHTML = stores.map(s => `
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 2px;font-size:13px">
+      <input type="checkbox" data-section="${section}" data-store="${s}" style="width:auto">
+      <span>${s}</span>
+    </label>`).join('');
+}
+
 function saveSharedGroup() {
   const srcSection = document.getElementById('sg-src-section').value;
   const srcStore   = document.getElementById('sg-src-store').value;
-  const dstSection = document.getElementById('sg-dst-section').value;
-  const dstStore   = document.getElementById('sg-dst-store').value;
   const label      = document.getElementById('sg-label').value.trim();
 
-  if(!srcStore || !dstStore) { alert('판매처를 선택하세요'); return; }
-  if(srcSection === dstSection && srcStore === dstStore) { alert('같은 판매처입니다'); return; }
+  if(!srcStore) { alert('원본 판매처를 선택하세요'); return; }
 
-  // 공유됨(dst)이 카운트에서 제외됨
-  // 원본 형식: {ak: dstSection, bn: dstStore, sharedWith: {ak: srcSection, bn: srcStore}}
-  if(!STATE.shared) STATE.shared = [];
-  STATE.shared.push({
-    ak: dstSection,
-    bn: dstStore,
-    sharedWith: { ak: srcSection, bn: srcStore },
-    label: label || undefined,
-  });
+  // 체크된 대상들 수집
+  const checked = document.querySelectorAll('#sg-dst-list input[type=checkbox]:checked');
+  const targets = Array.from(checked).map(cb => ({
+    ak: cb.dataset.section,
+    bn: cb.dataset.store,
+  })).filter(t => !(t.ak === srcSection && t.bn === srcStore));
 
+  if(!targets.length) { alert('공유 대상을 1개 이상 선택하세요'); return; }
+
+  const groups = getSharedGroups();
+  // 같은 원본 그룹이 이미 있으면 병합, 없으면 새로 추가
+  const existing = groups.find(g => g.src.ak === srcSection && g.src.bn === srcStore);
+  if(existing) {
+    targets.forEach(t => {
+      if(!existing.targets.some(e => e.ak === t.ak && e.bn === t.bn))
+        existing.targets.push(t);
+    });
+    if(label) existing.label = label;
+  } else {
+    groups.push({ label, src: { ak: srcSection, bn: srcStore }, targets });
+  }
+
+  flattenSharedGroups();
   STATE.dirty = true;
   STATE.pendingDataJs = true;
   updateSaveBar();
@@ -1331,12 +1430,51 @@ function saveSharedGroup() {
 
 function removeSharedGroup(i) {
   if(!confirm('이 공유 그룹을 삭제하시겠습니까?')) return;
-  STATE.shared.splice(i, 1);
+  getSharedGroups().splice(i, 1);
+  flattenSharedGroups();
   STATE.dirty = true;
   STATE.pendingDataJs = true;
   updateSaveBar();
   renderSharedGroups();
   renderDashboard();
+}
+
+function removeSharedTarget(groupIdx, targetIdx) {
+  const groups = getSharedGroups();
+  groups[groupIdx].targets.splice(targetIdx, 1);
+  if(!groups[groupIdx].targets.length) groups.splice(groupIdx, 1);
+  flattenSharedGroups();
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  renderSharedGroups();
+  renderDashboard();
+}
+
+function addTargetToGroup(groupIdx) {
+  const g = getSharedGroups()[groupIdx];
+  // 간단한 prompt UI
+  const section = prompt('섹션 입력 (INVENTORY/PHOTOBOOK/ID_PASS/POCAALBUM):');
+  if(!section) return;
+  const store = prompt('판매처명 입력:');
+  if(!store) return;
+  if(!g.targets.some(t => t.ak === section && t.bn === store)) {
+    g.targets.push({ ak: section, bn: store });
+    flattenSharedGroups();
+    STATE.dirty = true;
+    STATE.pendingDataJs = true;
+    updateSaveBar();
+    renderSharedGroups();
+  }
+}
+
+// renderSharedStoreOptions는 하위호환용 유지
+function renderSharedStoreOptions(selectId, section) {
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const stores = Object.keys(STATE.unpoData[section] || {});
+  sel.innerHTML = '<option value="">판매처 선택</option>' +
+    stores.map(s => `<option value="${s}">${s}</option>`).join('');
 }
 
 // ═══════════════════════════════════════════════
@@ -1713,47 +1851,52 @@ if(sessionStorage.getItem('admin_unlocked') === '1') {
 </script>
 <!-- ── 공유 그룹 모달 ── -->
 <div class="modal-bg" id="shared-modal">
-  <div class="modal">
+  <div class="modal" style="max-width:620px">
     <div class="modal-head">
-      <h3>🔗 공유 그룹 추가</h3>
+      <h3>🔗 공유 그룹 설정</h3>
       <button class="btn btn-ghost btn-sm" onclick="closeModal('shared-modal')">✕</button>
     </div>
     <div class="modal-body">
       <p class="text-sm text-muted" style="margin-bottom:16px">
-        같은 미공포 이미지를 공유하는 판매처를 지정합니다.<br>
-        <b>공유됨</b>으로 지정된 판매처는 총 카운트에서 제외됩니다.
+        같은 미공포 이미지를 <b>여러 판매처</b>가 공유할 때 설정합니다.<br>
+        <b style="color:var(--ok)">원본</b> 판매처는 카운트에 포함, <b style="color:var(--warn)">공유됨</b> 판매처들은 카운트에서 제외됩니다.
       </p>
+      <div class="form-row">
+        <div><label>그룹 이름</label>
+          <input id="sg-label" placeholder="예: ASTERUM 433-10 (십카페럭드)">
+        </div>
+      </div>
       <div class="form-row cols-2">
         <div>
-          <label>원본 판매처 (섹션)</label>
-          <select id="sg-src-section" onchange="renderSharedStoreOptions('sg-src-store', this.value)" style="margin-bottom:6px">
+          <label style="color:var(--ok)">✓ 원본 판매처 (카운트 포함)</label>
+          <select id="sg-src-section" onchange="sgRenderSrcStore()" style="margin-bottom:6px">
             <option value="INVENTORY">INVENTORY</option>
             <option value="PHOTOBOOK">PHOTOBOOK</option>
             <option value="ID_PASS" selected>ID_PASS</option>
             <option value="POCAALBUM">POCAALBUM</option>
           </select>
-          <select id="sg-src-store"><option>판매처 선택</option></select>
+          <select id="sg-src-store" style="margin-bottom:4px"><option value="">판매처 선택</option></select>
         </div>
         <div>
-          <label>공유 대상 (섹션)</label>
-          <select id="sg-dst-section" onchange="renderSharedStoreOptions('sg-dst-store', this.value)" style="margin-bottom:6px">
+          <label style="color:var(--warn)">⊘ 공유 대상들 (카운트 제외)</label>
+          <select id="sg-dst-section" onchange="sgRenderDstCandidates()" style="margin-bottom:6px">
             <option value="INVENTORY">INVENTORY</option>
             <option value="PHOTOBOOK">PHOTOBOOK</option>
             <option value="ID_PASS">ID_PASS</option>
             <option value="POCAALBUM" selected>POCAALBUM</option>
           </select>
-          <select id="sg-dst-store"><option>판매처 선택</option></select>
+          <div id="sg-dst-list" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r-sm);padding:6px;background:var(--sur2)">
+            <div class="text-muted text-sm">섹션 선택 후 표시됩니다</div>
+          </div>
         </div>
       </div>
-      <div class="form-row">
-        <div><label>그룹 메모 (선택)</label>
-          <input id="sg-label" placeholder="예: ASTERUM 433-10 (십카페럭드)">
-        </div>
+      <div style="font-size:12px;color:var(--tx3);margin-top:4px">
+        공유 대상은 체크박스로 여러 개 선택 가능합니다
       </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('shared-modal')">취소</button>
-      <button class="btn btn-p" onclick="saveSharedGroup()">추가</button>
+      <button class="btn btn-p" onclick="saveSharedGroup()">저장</button>
     </div>
   </div>
 </div>
