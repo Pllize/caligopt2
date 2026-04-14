@@ -672,33 +672,23 @@ async function init() {
   try {
     await loadScript('../js/data.js');
     await loadScript('../js/unpo.js');
-
-    STATE.distributors = JSON.parse(JSON.stringify(window.DISTRIBUTORS || []));
-    STATE.stores       = JSON.parse(JSON.stringify(window.STORES || []));
-    STATE.unpoData     = JSON.parse(JSON.stringify(window.UNPO_DATA || {}));
-    STATE.multiSets    = JSON.parse(JSON.stringify(window.UNPO_MULTI_SETS || {}));
-    STATE.shared       = JSON.parse(JSON.stringify(window.UNPO_SHARED || []));
-
-    renderAll();
-    loadGhConfig();
-    updateGhStatusBadge();
   } catch(e) {
-    console.error('데이터 로드 실패:', e);
-    showFallbackNotice();
+    console.warn('data.js / unpo.js 로드 실패 — 빈 상태로 시작합니다:', e);
   }
+  // 로드 성공 여부 관계없이 STATE에 반영 (없으면 빈 값)
+  STATE.distributors = JSON.parse(JSON.stringify(window.DISTRIBUTORS || []));
+  STATE.stores       = JSON.parse(JSON.stringify(window.STORES || []));
+  STATE.unpoData     = JSON.parse(JSON.stringify(window.UNPO_DATA || {}));
+  STATE.multiSets    = JSON.parse(JSON.stringify(window.UNPO_MULTI_SETS || {}));
+  STATE.shared       = JSON.parse(JSON.stringify(window.UNPO_SHARED || []));
+
+  renderAll();
+  loadGhConfig();
+  updateGhStatusBadge();
 }
 
 function showFallbackNotice() {
-  document.querySelector('.main').innerHTML = `
-    <div style="padding:60px 40px;text-align:center;color:var(--tx2)">
-      <div style="font-size:40px;margin-bottom:16px">⚠️</div>
-      <div style="font-size:16px;font-weight:700;color:var(--tx);margin-bottom:8px">data.js / unpo.js 로드 실패</div>
-      <div style="font-size:13px;line-height:1.8">
-        admin.html은 <code>admin/</code> 폴더에 위치해야 하며,<br>
-        <code>../js/data.js</code> 와 <code>../js/unpo.js</code> 가 존재해야 합니다.<br><br>
-        로컬에서 사용 시: <code>python3 -m http.server</code> 로 서버를 띄운 후 접속하세요.
-      </div>
-    </div>`;
+  // 더 이상 전체 화면 대체하지 않음 — init에서 빈 STATE로 처리
 }
 
 // ═══════════════════════════════════════════════
@@ -1960,8 +1950,12 @@ function showPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if(n.getAttribute('onclick')?.includes(`'${id}'`)) n.classList.add('active');
   });
-  if(id === 'export') renderExport();
-  if(id === 'github') { loadGhConfig(); updateGhStatusBadge(); }
+  if(id === 'stores')       renderStoresTable();
+  if(id === 'distributors') renderDistTable();
+  if(id === 'unpo')         { renderSharedGroups(); renderUnpoPage(); }
+  if(id === 'dashboard')    renderDashboard();
+  if(id === 'export')       renderExport();
+  if(id === 'github')       { loadGhConfig(); updateGhStatusBadge(); }
 }
 
 function closeModal(id) {
