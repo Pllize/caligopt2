@@ -1,6 +1,5 @@
 // Caligo Pt.2 - 판매처 · 배급사 데이터
-// 자동 생성 - 수동 편집하거나 admin.html에서 관리하세요
-// Last updated: 2026-04-13
+// Last updated: 2026-04-14
 
 var DISTRIBUTORS = [
   {
@@ -1135,11 +1134,39 @@ var STORES = [
     "memo": "",
     "custom": true,
     "id": "cs1776085185495"
+  },
+  {
+    "name": "VLASTSHOP",
+    "distId": "dcs1774543391747",
+    "country": "KR",
+    "unpoPerk": "POCAALBUM",
+    "priceMode": "custom",
+    "customPrices": {
+      "PHOTOBOOK": null,
+      "POCAALBUM": 8200,
+      "ID_PASS": null,
+      "INVENTORY": null
+    },
+    "purchaseStart": "2026-04-14T11:00",
+    "purchaseEnd": "2026-04-20T23:00",
+    "purchaseEndTxt": "",
+    "defDeliveryDate": "",
+    "offlineStart": "",
+    "offlineEnd": "",
+    "offlineHours": "",
+    "offlineAddress": "",
+    "offlineNote": "",
+    "offlineLuckyDraw": false,
+    "defDomShip": 0,
+    "defOvsShip": 0,
+    "url": "https://vlastshop.com/product/[DRIVING-TALK-EVENT]-PLAVE-4th-Mini-Album-/'Caligo-Pt.2/'-(POCAALBUM-Ver._5%EC%A2%85-%EC%A4%91-%EB%9E%9C%EB%8D%A4%EB%B0%9C%EC%86%A1)/305/category/55/display/1/",
+    "videocall": true,
+    "memo": "영통발표: 4/21 ; 드라이빙토크회: 5/31",
+    "custom": true,
+    "id": "cs1776171151326"
   }
 ];
 
-// 멀티세트 그룹 (세트가 2개 이상인 판매처)
-// { section: { storeName: setCount } }
 var UNPO_MULTI_SETS = {
   "ID_PASS": {
     "무신사": 2,
@@ -1157,70 +1184,13 @@ var UNPO_MULTI_SETS = {
   }
 };
 
-// 이미지 공유 그룹 (같은 미공포 이미지를 여러 판매처가 공유하는 경우)
-var UNPO_SHARED_GROUPS = {
-  "ASTERUM_433": {
-    "label": "ASTERUM 433-10 (십카페럭드)",
-    "stores": [
-      {
-        "section": "ID_PASS",
-        "store": "무신사",
-        "setIdx": 1
-      },
-      {
-        "section": "POCAALBUM",
-        "store": "길보드",
-        "setIdx": 0
-      }
-    ]
-  }
-};
-
-
-// ─── 앨범 종류 ───────────────────────────────
-var ALBUMS = [
-  {k:'PHOTOBOOK', lb:'PHOTOBOOK'},
-  {k:'POCAALBUM', lb:'POCAALBUM'},
-  {k:'ID_PASS',  lb:'ID PASS'},
-  {k:'INVENTORY',lb:'INVENTORY'},
-];
-var COUNTRIES = {
-  KR:{lb:'🇰🇷 한국', cur:'KRW', ovs:false},
-  JP:{lb:'🇯🇵 일본', cur:'JPY', ovs:true},
-  CN:{lb:'🇨🇳 중국', cur:'CNY', ovs:true},
-  TW:{lb:'🇹🇼 대만', cur:'TWD', ovs:true},
-  US:{lb:'🇺🇸 미국', cur:'USD', ovs:true},
-  OTHER:{lb:'🌐 기타', cur:'OTHER', ovs:true},
-};
-var STATUSES = [
-  {k:'none',   lb:'미구매',   cls:'bx-none'},
-  {k:'waiting',lb:'구매대기', cls:'bx-wait'},
-  {k:'ordered',lb:'구매완료', cls:'bx-ord'},
-  {k:'delivered',lb:'배송완료',cls:'bx-del'},
-];
-var PRICES = {"KR": {"PHOTOBOOK": 20000, "POCAALBUM": 8200, "ID_PASS": 14900, "INVENTORY": 17100}, "JP": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": 2420, "INVENTORY": null}, "CN": {"PHOTOBOOK": 96, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}, "TW": {"PHOTOBOOK": null, "POCAALBUM": 210, "ID_PASS": null, "INVENTORY": null}, "US": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": 29.98, "INVENTORY": null}, "OTHER": {"PHOTOBOOK": null, "POCAALBUM": null, "ID_PASS": null, "INVENTORY": null}};
-var DEF_RATES = {JPY:9.429, CNY:217.5556, USD:1504.0284, TWD:47.0702, OTHER:1};
-
-// ═══════════════════════════════════════════
-// INITIAL STORE DATA
-// ═══════════════════════════════════════════
-
-// ─── 스케줄 ──────────────────────────────────
-var SCHEDULE = [
-  {date:'2026-03-30', label:'컨셉포토 B 공개', key:true},
-  {date:'2026-04-02', label:'비주얼 샘플러 B 공개', key:true},
-  {date:'2026-04-06', label:'트랙리스트 공개', key:true},
-  {date:'2026-04-07', label:'실물 앨범 프리뷰', key:true},
-  {date:'2026-04-08', label:'하이라이트 메들리', key:true},
-  {date:'2026-04-10', label:'뮤직비디오 티저 공개', key:true},
-  {date:'2026-04-13', label:'Caligo Pt.2 MV 공개 & 디지털 발매', key:true, important:true, time:'오후 6시 KST'},
-  {date:'2026-04-14', label:'Caligo Pt.2 앨범 발매', key:true, important:true},
-];
-
-
-// ── CHARACTER IMAGES ──
-
-// ─── 이미지 공유 그룹 (같은 미공포를 공유하는 판매처) ───
 var UNPO_SHARED = [
-  {ak:'POCAALBUM', bn:'길보드',    sharedWith:{ak:'ID_PASS',   bn:'무신사'}},
+  {
+    "ak": "POCAALBUM",
+    "bn": "길보드",
+    "sharedWith": {
+      "ak": "ID_PASS",
+      "bn": "무신사"
+    }
+  }
 ];
