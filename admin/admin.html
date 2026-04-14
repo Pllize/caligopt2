@@ -1187,9 +1187,12 @@ function deleteDist(i) {
 
 function getUnpoSets(section, storeName) {
   const name = decodeURIComponent(storeName);
-  if(!STATE.unpoData[section]) STATE.unpoData[section] = {};
-  if(!STATE.unpoData[section][name]) STATE.unpoData[section][name] = [];
-  return STATE.unpoData[section][name];
+  const sectionData = STATE.unpoData[section];
+  if(!sectionData) return null;
+  // 정확히 일치하는 key 탐색 (encode/decode 불일치 방지)
+  const realKey = Object.keys(sectionData).find(k => k === name);
+  if(realKey === undefined) return null;
+  return sectionData[realKey];
 }
 
 function makeBlankSet(n=5) {
@@ -1251,7 +1254,13 @@ function removeUnpoForStore(store) {
 // 세트 추가 (최대 2세트)
 function addUnpoSet(section, storeName) {
   const name = decodeURIComponent(storeName);
-  const sets = getUnpoSets(section, name);
+  // STATE.unpoData에서 실제 존재하는 key를 직접 찾음
+  const sectionData = STATE.unpoData[section];
+  if(!sectionData) { console.warn('addUnpoSet: section not found', section); return; }
+  // 정확히 일치하는 key 탐색
+  const realKey = Object.keys(sectionData).find(k => k === name) ?? name;
+  if(!sectionData[realKey]) { console.warn('addUnpoSet: storeName not found', name); return; }
+  const sets = sectionData[realKey];
   if(sets.length >= 2) { alert('미공포 세트는 최대 2개까지 추가할 수 있습니다.'); return; }
   // 기존 첫 세트의 뒷면 여부를 기준으로 새 세트 카드 수 결정
   const firstSet = sets[0];
@@ -1267,8 +1276,8 @@ function addUnpoSet(section, storeName) {
 
 // 세트 삭제
 function removeUnpoSet(section, storeName, si) {
-  const name = decodeURIComponent(storeName);
-  const sets = getUnpoSets(section, name);
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
   if(sets.length <= 1) { alert('마지막 세트는 삭제할 수 없습니다'); return; }
   if(!confirm(`Set ${si+1}을 삭제하시겠습니까?`)) return;
   sets.splice(si, 1);
@@ -1293,8 +1302,8 @@ function removeUnpoStore(section, storeName) {
 
 // 뒷면 포함/제외 토글
 function toggleUnpoBack(section, storeName, si) {
-  const name = decodeURIComponent(storeName);
-  const sets = getUnpoSets(section, name);
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
   const s = sets[si];
   const cards = Array.isArray(s) ? s : (s.cards || []);
   const memo = Array.isArray(s) ? '' : (s.memo || '');
@@ -1325,8 +1334,8 @@ function setUnpoCardCount(section, storeName, si, n) {
 
 // 세트 메모 변경
 function setUnpoMemo(section, storeName, si, value) {
-  const name = decodeURIComponent(storeName);
-  const sets = getUnpoSets(section, name);
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
   const s = sets[si];
   if(Array.isArray(s)) {
     sets[si] = { cards: s, memo: value };
@@ -1340,8 +1349,8 @@ function setUnpoMemo(section, storeName, si, value) {
 
 // 이미지 삭제
 function clearUnpoImg(section, storeName, si, ci) {
-  const name = decodeURIComponent(storeName);
-  const sets = getUnpoSets(section, name);
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
   const s = sets[si];
   const cards = Array.isArray(s) ? s : (s.cards || []);
   if(!confirm('이 카드 이미지를 삭제하시겠습니까?')) return;
@@ -1379,6 +1388,7 @@ function saveNote() {
   const { section, storeName, si, ci } = _noteCtx;
   const val = document.getElementById('note-modal-text').value;
   const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
   const s = sets[si];
   const cards = Array.isArray(s) ? s : (s.cards || []);
   if(cards[ci]) cards[ci].note = val;
@@ -1590,9 +1600,16 @@ function uploadUnpoImg(evt, section, storeName, setIdx, cardIdx) {
   const file = evt.target.files[0];
   if(!file) return;
 
+  const decodedName = decodeURIComponent(storeName);
   const secDir = {INVENTORY:'inventory',PHOTOBOOK:'photobook',ID_PASS:'id_pass',POCAALBUM:'pocaalbum'}[section];
-  const storeKey = STORE_KEY_MAP[storeName] || storeName.toLowerCase().replace(/[^a-z0-9]/g,'_');
-  const sets = STATE.unpoData[section]?.[storeName];
+  const storeKey = STORE_KEY_MAP[decodedName] || decodedName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+
+  // 실제 key 탐색
+  const sectionData = STATE.unpoData[section];
+  if(!sectionData) return;
+  const realKey = Object.keys(sectionData).find(k => k === decodedName);
+  if(!realKey) return;
+  const sets = sectionData[realKey];
   if(!sets) return;
   const s = sets[setIdx];
   const cards = Array.isArray(s) ? s : (s.cards || []);
