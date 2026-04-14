@@ -1860,17 +1860,28 @@ async function ghPushIndexHtml() {
   if(!res.ok) throw new Error(`index.html 로드 실패: HTTP ${res.status}`);
   const fileData = await res.json();
   const sha = fileData.sha;
-  let html = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+
+  // UTF-8 안전 디코딩 (한국어 포함)
+  const raw = fileData.content.replace(/\n/g, '');
+  const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+  let html = new TextDecoder('utf-8').decode(bytes);
 
   // 2. unpoData에서 previewUrl(dataUrl) 제거 — 경로만 남김
   const cleanedUnpoData = cleanUnpoDataForExport(STATE.unpoData);
 
-  // 3. 각 데이터 블록 교체 (정규식으로 var XXX = ... ; 블록 통째로 교체)
-  html = replaceInlineVar(html, 'DISTRIBUTORS',   JSON.stringify(STATE.distributors, null, 2));
-  html = replaceInlineVar(html, 'STORES',         JSON.stringify(STATE.stores, null, 2));
-  html = replaceInlineVar(html, 'UNPO_MULTI_SETS',JSON.stringify(STATE.multiSets || {}, null, 2));
-  html = replaceInlineVar(html, 'UNPO_SHARED',    JSON.stringify(STATE.shared || [], null, 2));
-  html = replaceInlineVar(html, 'UNPO_DATA',      JSON.stringify(cleanedUnpoData, null, 2));
+  // 3. 각 데이터 블록 교체
+  const vars = [
+    ['DISTRIBUTORS',    JSON.stringify(STATE.distributors, null, 2)],
+    ['STORES',          JSON.stringify(STATE.stores, null, 2)],
+    ['UNPO_MULTI_SETS', JSON.stringify(STATE.multiSets || {}, null, 2)],
+    ['UNPO_SHARED',     JSON.stringify(STATE.shared || [], null, 2)],
+    ['UNPO_DATA',       JSON.stringify(cleanedUnpoData, null, 2)],
+  ];
+  for(const [name, value] of vars) {
+    const before = html;
+    html = replaceInlineVar(html, name, value);
+    if(html !== before) addCommitLog(`  ✓ ${name} 교체 완료`, 'ok');
+  }
 
   // 날짜 주석 갱신
   html = html.replace(
@@ -1878,26 +1889,61 @@ async function ghPushIndexHtml() {
     `// Last updated: ${new Date().toISOString().slice(0,10)}`
   );
 
-  // 4. push
-  const base64 = btoa(unescape(encodeURIComponent(html)));
+  // 4. UTF-8 안전 인코딩 후 push
+  const encoded = new TextEncoder().encode(html);
+  let binary = '';
+  encoded.forEach(b => binary += String.fromCharCode(b));
+  const base64 = btoa(binary);
   await ghPutFile('index.html', base64, `🔄 admin 데이터 업데이트 (${new Date().toISOString().slice(0,10)})`, sha);
   addCommitLog('✓ index.html 업데이트 push 완료', 'ok');
   addCommitLog('🚀 GitHub Pages 배포 시작 (약 1분 소요)', 'info');
 }
 
 // index.html 안의 "var NAME = ...;" 블록을 새 값으로 교체
+// 정규식 대신 문자열 split 방식 — 더 안정적
 function replaceInlineVar(html, varName, newJsonValue) {
-  // var VARNAME = ... (배열이면 ];, 객체면 };) 로 끝나는 블록 매칭
-  const re = new RegExp(`(var ${varName}\\s*=\\s*)([\\s\\S]*?)(;\\s*\\n)`, 'm');
-  const isArray = newJsonValue.trimStart().startsWith('[');
-  const replacement = `var ${varName} = ${newJsonValue};\n`;
-  if(re.test(html)) {
-    return html.replace(re, replacement);
+  const startMarker = `var ${varName} = `;
+
+  const startIdx = html.indexOf(startMarker);
+  if(startIdx === -1) {
+    console.warn(`replaceInlineVar: "${varName}" 시작 마커를 찾지 못했습니다`);
+    addCommitLog(`⚠️ ${varName} 블록 교체 실패 — 수동 확인 필요`, 'warn');
+    return html;
   }
-  // 매칭 실패 시 경고만 하고 원본 반환
-  console.warn(`replaceInlineVar: "${varName}" 블록을 찾지 못했습니다`);
-  addCommitLog(`⚠️ ${varName} 블록 교체 실패 — 수동 확인 필요`, 'warn');
-  return html;
+
+  // 값 부분이 배열([)인지 객체({)인지 판별해서 닫는 문자 결정
+  const valueStart = startIdx + startMarker.length;
+  const firstChar = html[valueStart];
+  const closeChar = firstChar === '[' ? ']' : '}';
+
+  // 닫는 괄호 + 세미콜론 위치 탐색 (중첩 고려)
+  let depth = 0;
+  let endIdx = -1;
+  for(let i = valueStart; i < html.length; i++) {
+    const ch = html[i];
+    if(ch === firstChar) depth++;
+    else if(ch === closeChar) {
+      depth--;
+      if(depth === 0) {
+        // ]; 또는 }; 위치
+        endIdx = i + 1; // closeChar 다음 (세미콜론 위치)
+        // 세미콜론 찾기
+        while(endIdx < html.length && html[endIdx] !== ';') endIdx++;
+        endIdx++; // 세미콜론 포함
+        break;
+      }
+    }
+  }
+
+  if(endIdx === -1) {
+    console.warn(`replaceInlineVar: "${varName}" 끝 위치를 찾지 못했습니다`);
+    addCommitLog(`⚠️ ${varName} 블록 끝 탐색 실패`, 'warn');
+    return html;
+  }
+
+  const before = html.slice(0, startIdx);
+  const after  = html.slice(endIdx);
+  return `${before}var ${varName} = ${newJsonValue};${after}`;
 }
 
 // unpoData에서 dataUrl 제거 (경로만 유지)
