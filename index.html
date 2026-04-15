@@ -507,7 +507,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 <script>
 // Caligo Pt.2 - 판매처 · 배급사 데이터
 // 자동 생성 - 수동 편집하거나 admin.html에서 관리하세요
-// Last updated: 2026-04-14
+// Last updated: 2026-04-15
 
 var DISTRIBUTORS = [
   {
@@ -605,34 +605,40 @@ var DISTRIBUTORS = [
   {
     "id": "dcs1776085087300",
     "name": "Youtube"
+  },
+  {
+    "name": "ASTERUM 433-10",
+    "id": "dcs1776280497538"
   }
 ];
 
 var STORES = [
   {
-    "name": "길보드 (ASTERUM 433-10)",
+    "name": "길보드",
     "distId": "",
     "country": "KR",
-    "unpoPerk": "POCAALBUM",
+    "unpoPerk": "ID_PASS",
+    "unpoSets": 1,
+    "unpoBack": false,
     "priceMode": "country",
-    "customPrices": {},
+    "customPrices": null,
     "purchaseStart": "2026-04-20T15:00",
     "purchaseEnd": "2026-04-20T23:00",
     "purchaseEndTxt": "",
+    "defDeliveryDate": "",
     "offlineStart": "2026-04-20",
     "offlineEnd": "2026-04-20",
-    "offlineNote": "모든 버전 구매시 A2T DRAW (십카페 럭드) 와 동일한 포카 중 랜덤 1종 증정\n럭드 포토카드중 친필사인 포토카드 랜덤 제공",
+    "offlineHours": "15:00 - 23:00",
+    "offlineAddress": "서대문구 연희로11가길 48-23",
+    "offlineNote": "모든 버전 구매시 Youtube 럭드와 동일한 포카 중 랜덤 1종 증정\n럭드 포토카드중 친필사인 포토카드 랜덤 제공",
+    "offlineLuckyDraw": true,
     "defDomShip": 0,
     "defOvsShip": 0,
     "url": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80d4-91e3-e505275bb65c",
-    "custom": true,
-    "id": "cs1774546479074",
-    "defDeliveryDate": "",
-    "offlineHours": "15:00 - 23:00",
-    "offlineAddress": "서대문구 연희로11가길 48-23",
-    "offlineLuckyDraw": true,
     "videocall": false,
-    "memo": ""
+    "memo": "",
+    "custom": true,
+    "id": "cs1774546479074"
   },
   {
     "name": "더현대서울",
@@ -1644,12 +1650,10 @@ var STORES = [
     "id": "cs1776085185495"
   },
   {
-    "name": "VLASTSHOP (2차)",
+    "name": "VLASTSHOP",
     "distId": "dcs1774543391747",
     "country": "KR",
     "unpoPerk": "POCAALBUM",
-    "unpoSets": 1,
-    "unpoBack": false,
     "priceMode": "custom",
     "customPrices": {
       "PHOTOBOOK": null,
@@ -1674,6 +1678,33 @@ var STORES = [
     "memo": "영통발표: 4/21 ; 드라이빙토크회: 5/31",
     "custom": true,
     "id": "cs1776171151326"
+  },
+  {
+    "name": "ASTERUM 433-10",
+    "distId": "dcs1776280497538",
+    "country": "KR",
+    "unpoPerk": "POCAALBUM",
+    "unpoSets": 1,
+    "unpoBack": false,
+    "priceMode": "country",
+    "customPrices": null,
+    "purchaseStart": "2026-04-14T10:30",
+    "purchaseEnd": "",
+    "purchaseEndTxt": "",
+    "defDeliveryDate": "",
+    "offlineStart": "",
+    "offlineEnd": "",
+    "offlineHours": "",
+    "offlineAddress": "",
+    "offlineNote": "",
+    "offlineLuckyDraw": false,
+    "defDomShip": 0,
+    "defOvsShip": 0,
+    "url": "",
+    "videocall": false,
+    "memo": "",
+    "custom": true,
+    "id": "cs1776280525802"
   }
 ];
 
@@ -1763,10 +1794,10 @@ var SCHEDULE = [
 var UNPO_SHARED = [
   {
     "ak": "POCAALBUM",
-    "bn": "길보드",
+    "bn": "Youtube",
     "sharedWith": {
-      "ak": "ID_PASS",
-      "bn": "무신사"
+      "ak": "POCAALBUM",
+      "bn": "길보드"
     }
   }
 ];
@@ -1898,7 +1929,37 @@ var UNPO_DATA = {
           "note": "",
           "owned": false
         }
-      ]
+      ],
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": "드라이빙영통 특전 (흥흥흥)"
+      }
     ],
     "TME": [
       [
@@ -2280,6 +2341,38 @@ var UNPO_DATA = {
           "owned": false
         }
       ]
+    ],
+    "길보드": [
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": ""
+      }
     ]
   },
   "POCAALBUM": {
@@ -2438,7 +2531,7 @@ var UNPO_DATA = {
             "owned": false
           }
         ],
-        "memo": "ASTERUM 433-10 (십카페럭드), 무신사 세트2와 동일"
+        "memo": "유튜브럭드와 동일"
       }
     ],
     "WEVERSE JP": [
@@ -2603,10 +2696,10 @@ var UNPO_DATA = {
             "owned": false
           }
         ],
-        "memo": ""
+        "memo": "길보드 럭드와 동일"
       }
     ],
-    "VLASTSHOP (2차)": [
+    "ASTERUM 433-10": [
       {
         "cards": [
           {
@@ -2635,7 +2728,7 @@ var UNPO_DATA = {
             "owned": false
           }
         ],
-        "memo": ""
+        "memo": "무신사 2번세트와 동일"
       }
     ]
   }
