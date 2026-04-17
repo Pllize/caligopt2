@@ -1871,6 +1871,10 @@ async function saveAllToGitHub() {
     btnText.textContent = 'index.html 저장 중...';
     await ghPushIndexHtml();
 
+    // 3. data.js / unpo.js 동기화 push
+    btnText.textContent = 'data.js / unpo.js 저장 중...';
+    await ghPushSideFiles();
+
     // 완료
     STATE.pendingImages = {};
     STATE.pendingDataJs = false;
@@ -1879,8 +1883,8 @@ async function saveAllToGitHub() {
     updateSaveBar();
 
     const msg = imgFailed > 0
-      ? `완료 (이미지 ${imgSuccess}장 성공, ${imgFailed}장 실패) — 반영까지 ~1분`
-      : `🎉 완료! — GitHub Pages 반영까지 ~1분`;
+      ? `완료 (이미지 ${imgSuccess}장 성공, ${imgFailed}장 실패) — index.html + data.js + unpo.js 반영 ~1분`
+      : `🎉 완료! — index.html + data.js + unpo.js push 완료 (~1분 후 반영)`;
     addCommitLog(msg, imgFailed > 0 ? 'warn' : 'ok');
     showToast(msg, imgFailed > 0 ? 'warn' : 'ok');
 
@@ -1897,13 +1901,46 @@ async function saveAllToGitHub() {
 async function ghPushUnpoImage() {}
 
 async function ghPushUnpoJs() {
-  // 더 이상 별도 unpo.js push 안 함 — index.html에 직접 반영
   await ghPushIndexHtml();
 }
 
 async function ghPushDataJs() {
-  // 더 이상 별도 data.js push 안 함 — index.html에 직접 반영
-  // (ghPushIndexHtml는 saveAllToGitHub에서 한 번만 호출)
+  // saveAllToGitHub에서 일괄 처리
+}
+
+// data.js / unpo.js를 GitHub에 push
+async function ghPushSideFiles() {
+  const cfg = getGhConfig();
+
+  // data.js 생성 및 push
+  try {
+    addCommitLog('⏳ js/data.js 업데이트 중...', 'info');
+    const dataContent = generateDataJs();
+    const dataEncoded = new TextEncoder().encode(dataContent);
+    let dataBinary = '';
+    dataEncoded.forEach(b => dataBinary += String.fromCharCode(b));
+    const dataBase64 = btoa(dataBinary);
+    const dataSha = await getFileSha('js/data.js');
+    await ghPutFile('js/data.js', dataBase64, `🔄 data.js 업데이트 (${new Date().toISOString().slice(0,10)})`, dataSha);
+    addCommitLog('✓ js/data.js push 완료', 'ok');
+  } catch(e) {
+    addCommitLog(`⚠️ js/data.js push 실패: ${e.message}`, 'warn');
+  }
+
+  // unpo.js 생성 및 push
+  try {
+    addCommitLog('⏳ js/unpo.js 업데이트 중...', 'info');
+    const unpoContent = generateUnpoJs();
+    const unpoEncoded = new TextEncoder().encode(unpoContent);
+    let unpoBinary = '';
+    unpoEncoded.forEach(b => unpoBinary += String.fromCharCode(b));
+    const unpoBase64 = btoa(unpoBinary);
+    const unpoSha = await getFileSha('js/unpo.js');
+    await ghPutFile('js/unpo.js', unpoBase64, `🔄 unpo.js 업데이트 (${new Date().toISOString().slice(0,10)})`, unpoSha);
+    addCommitLog('✓ js/unpo.js push 완료', 'ok');
+  } catch(e) {
+    addCommitLog(`⚠️ js/unpo.js push 실패: ${e.message}`, 'warn');
+  }
 }
 
 // index.html의 인라인 데이터 블록을 교체해서 push
