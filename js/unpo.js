@@ -1,5 +1,5 @@
 // Caligo Pt.2 - 미공포 메타데이터
-// Last updated: 2026-04-14
+// Last updated: 2026-04-17
 
 var UNPO_DATA = {
   "INVENTORY": {
@@ -86,6 +86,38 @@ var UNPO_DATA = {
           },
           {
             "img": "./images/inventory/withmuu_hamin.webp",
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": ""
+      }
+    ],
+    "버프즈": [
+      {
+        "cards": [
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
             "note": "",
             "owned": false
           }
