@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caligo Pt.2 — 관리자 툴</title>
+<style>
+:root {
+  --bg: #0d0d10;
+  --sur: #16161b;
+  --sur2: #1e1e25;
+  --bd: rgba(255,255,255,.08);
+  --bd2: rgba(255,255,255,.14);
+  --tx: #e8e6f0;
+  --tx2: #9896aa;
+  --tx3: #5e5c6e;
+  --pk: #c084fc;
+  --pk2: #a855f7;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --info: #60a5fa;
+  --r: 10px;
+  --r-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--tx); font: 14px/1.6 'Pretendard', 'Apple SD Gothic Neo', sans-serif; min-height: 100vh; }
+
+/* ── Layout ── */
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar { background: var(--sur); border-right: 1px solid var(--bd); padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.main { padding: 32px; overflow-y: auto; }
+
+/* ── Sidebar ── */
+.logo { font-size: 13px; font-weight: 700; color: var(--pk); letter-spacing: .06em; text-transform: uppercase; padding: 0 8px 20px; border-bottom: 1px solid var(--bd); margin-bottom: 12px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); cursor: pointer; color: var(--tx2); font-size: 13px; border: none; background: none; width: 100%; text-align: left; transition: all .15s; }
+.nav-item:hover { background: var(--sur2); color: var(--tx); }
+.nav-item.active { background: rgba(192,132,252,.12); color: var(--pk); font-weight: 600; }
+.nav-icon { width: 16px; text-align: center; opacity: .7; }
+.nav-section { font-size: 11px; color: var(--tx3); letter-spacing: .08em; text-transform: uppercase; padding: 14px 10px 6px; }
+
+/* ── Page ── */
+.page { display: none; }
+.page.active { display: block; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.page-title { font-size: 20px; font-weight: 700; color: var(--tx); }
+.page-sub { font-size: 13px; color: var(--tx2); margin-top: 2px; }
+
+/* ── Cards / Tables ── */
+.card { background: var(--sur); border: 1px solid var(--bd); border-radius: var(--r); padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--pk); margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 8px 12px; background: var(--sur2); color: var(--tx3); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid var(--bd); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--bd); color: var(--tx); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+/* ── Badges ── */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-pk { background: rgba(192,132,252,.15); color: var(--pk); }
+.badge-ok { background: rgba(52,211,153,.12); color: var(--ok); }
+.badge-warn { background: rgba(251,191,36,.12); color: var(--warn); }
+.badge-err { background: rgba(248,113,113,.12); color: var(--err); }
+.badge-info { background: rgba(96,165,250,.12); color: var(--info); }
+.badge-gray { background: rgba(255,255,255,.07); color: var(--tx2); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+.btn-p { background: var(--pk2); color: #fff; }
+.btn-p:hover { background: var(--pk); }
+.btn-ghost { background: var(--sur2); color: var(--tx2); border: 1px solid var(--bd2); }
+.btn-ghost:hover { color: var(--tx); border-color: var(--bd2); }
+.btn-ok { background: rgba(52,211,153,.15); color: var(--ok); border: 1px solid rgba(52,211,153,.3); }
+.btn-ok:hover { background: rgba(52,211,153,.25); }
+.btn-err { background: rgba(248,113,113,.12); color: var(--err); border: 1px solid rgba(248,113,113,.25); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* ── Form ── */
+.form-row { display: grid; gap: 12px; margin-bottom: 12px; }
+.form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+label { font-size: 12px; color: var(--tx2); display: block; margin-bottom: 4px; }
+input, select, textarea {
+  width: 100%; padding: 8px 10px; background: var(--sur2); border: 1px solid var(--bd2);
+  border-radius: var(--r-sm); color: var(--tx); font-size: 13px; font-family: inherit;
+  outline: none; transition: border-color .15s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--pk2); }
+textarea { resize: vertical; min-height: 80px; }
+select option { background: var(--sur2); }
+
+/* ── Unpo grid ── */
+.unpo-section { margin-bottom: 28px; }
+.unpo-section-title { font-size: 12px; font-weight: 700; color: var(--pk); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--bd); }
+.unpo-store { margin-bottom: 16px; }
+.unpo-store-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.unpo-store-name { font-size: 13px; font-weight: 600; }
+.unpo-sets { display: flex; flex-direction: column; gap: 8px; }
+.unpo-set { background: var(--sur2); border: 1px solid var(--bd); border-radius: var(--r-sm); padding: 10px 12px; }
+.unpo-set-label { font-size: 11px; color: var(--pk); font-weight: 600; margin-bottom: 8px; }
+.unpo-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.unpo-cards.six { grid-template-columns: repeat(6, 1fr); }
+.unpo-card { position: relative; aspect-ratio: 3/4; border-radius: 4px; overflow: hidden; border: 1px solid var(--bd2); background: var(--sur); cursor: pointer; transition: border-color .15s; }
+.unpo-card:hover { border-color: var(--pk); }
+.unpo-card img { width: 100%; height: 100%; object-fit: cover; }
+.unpo-card .member-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,.7); font-size: 10px; text-align: center; padding: 2px; color: var(--tx2); }
+.unpo-card .no-img { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--tx3); font-size: 10px; gap: 4px; }
+.unpo-card .upload-hint { position: absolute; inset: 0; background: rgba(192,132,252,.2); display: none; align-items: center; justify-content: center; font-size: 18px; }
+.unpo-card:hover .upload-hint { display: flex; }
+.unpo-card input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* ── Export ── */
+.export-box { background: var(--sur2); border: 1px solid var(--bd); border-radius: var(--r-sm); padding: 14px; font: 12px/1.7 'Menlo','Monaco',monospace; color: var(--tx2); white-space: pre; overflow-x: auto; max-height: 300px; overflow-y: auto; }
+
+/* ── Stats ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--sur); border: 1px solid var(--bd); border-radius: var(--r); padding: 16px 20px; }
+.stat-num { font-size: 28px; font-weight: 700; color: var(--pk); line-height: 1; }
+.stat-label { font-size: 12px; color: var(--tx2); margin-top: 4px; }
+
+/* ── Modal ── */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--sur); border: 1px solid var(--bd2); border-radius: var(--r); width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; }
+.modal-head { padding: 18px 20px; border-bottom: 1px solid var(--bd); display: flex; align-items: center; justify-content: space-between; }
+.modal-head h3 { font-size: 15px; font-weight: 700; }
+.modal-body { padding: 20px; }
+.modal-foot { padding: 14px 20px; border-top: 1px solid var(--bd); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── Misc ── */
+.empty { text-align: center; padding: 40px 20px; color: var(--tx3); font-size: 13px; }
+.tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; background: var(--sur2); color: var(--tx3); margin: 1px; }
+.divider { border: none; border-top: 1px solid var(--bd); margin: 20px 0; }
+.flex { display: flex; align-items: center; gap: 8px; }
+.flex-1 { flex: 1; }
+.text-sm { font-size: 12px; }
+.text-muted { color: var(--tx2); }
+code { font: 12px 'Menlo','Monaco',monospace; background: var(--sur2); padding: 1px 5px; border-radius: 3px; color: var(--info); }
+.dot-ok { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.dot-none { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--tx3); }
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+/* 미공포 관리 추가 스타일 */
+.unpo-store-header { gap:8px; flex-wrap:wrap; }
+.unpo-set-controls { display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+.unpo-set-memo input { background:var(--sur); border:1px solid var(--bd); border-radius:var(--r-sm); padding:3px 8px; font-size:12px; color:var(--tx2); width:180px; }
+.unpo-card-wrap { position:relative; }
+.card-note-badge { position:absolute; top:2px; right:2px; background:rgba(192,132,252,.85); color:#fff; font-size:9px; padding:1px 4px; border-radius:3px; pointer-events:none; }
+.card-ctrl-bar { display:flex; gap:4px; margin-top:4px; }
+.card-ctrl-bar button { flex:1; padding:3px 0; font-size:10px; border-radius:3px; border:1px solid var(--bd2); background:var(--sur2); color:var(--tx2); cursor:pointer; }
+.card-ctrl-bar button:hover { color:var(--tx); border-color:var(--pk); }
+.back-toggle { display:inline-flex; align-items:center; gap:5px; cursor:pointer; padding:3px 10px; border-radius:var(--r-sm); border:1px solid var(--bd2); background:var(--sur); font-size:12px; color:var(--tx2); transition:all .15s; }
+.back-toggle:hover { border-color:var(--pk); color:var(--pk); }
+.back-toggle.active { border-color:var(--pk2); background:rgba(192,132,252,.12); color:var(--pk); font-weight:600; }
+.set-count-ctrl { display:inline-flex; align-items:center; gap:4px; }
+.set-count-ctrl button { padding:3px 10px; font-size:12px; border-radius:var(--r-sm); border:1px solid var(--bd2); background:var(--sur); color:var(--tx2); cursor:pointer; }
+.set-count-ctrl button:hover { border-color:var(--pk); color:var(--pk); }
+.unpo-set-header-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--bd); }
+.note-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; align-items:center; justify-content:center; }
+.note-modal-bg.open { display:flex; }
+.note-modal { background:var(--sur); border:1px solid var(--bd2); border-radius:var(--r); padding:20px; width:320px; }
+.note-modal h4 { font-size:14px; font-weight:600; margin-bottom:12px; }
+.note-modal textarea { width:100%; min-height:80px; resize:vertical; }
+.note-modal .foot { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+@keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+#lock-screen {
+  position:fixed; inset:0; background:var(--bg); z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+}
+#lock-screen .lock-box {
+  background:var(--sur); border:1px solid var(--bd2); border-radius:var(--r);
+  padding:40px 36px; width:320px; text-align:center;
+}
+#lock-screen .lock-icon { font-size:40px; margin-bottom:16px; }
+#lock-screen .lock-title { font-size:18px; font-weight:700; color:var(--tx); margin-bottom:6px; }
+#lock-screen .lock-sub { font-size:13px; color:var(--tx3); margin-bottom:24px; }
+#lock-screen input {
+  width:100%; padding:12px 14px; background:var(--sur2);
+  border:1px solid var(--bd2); border-radius:var(--r-sm);
+  color:var(--tx); font-size:18px; text-align:center; letter-spacing:.3em;
+  margin-bottom:12px;
+}
+#lock-screen input:focus { border-color:var(--pk2); outline:none; }
+#lock-screen input.shake {
+  animation:shake .3s ease;
+  border-color:var(--err) !important;
+}
+#lock-screen .lock-error { font-size:12px; color:var(--err); min-height:16px; margin-bottom:12px; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)}
+}
+#save-bar {
+  display:none; position:fixed; bottom:0; left:220px; right:0; z-index:50;
+  background:var(--sur2); border-top:1px solid var(--bd2);
+  padding:12px 24px; align-items:center; gap:12px;
+  animation: slideUp .2s ease;
+}
+#save-bar.visible { display:flex; }
+#save-bar .save-count { flex:1; font-size:13px; color:var(--tx2); }
+#save-bar .save-count b { color:var(--warn); }
+</style>
+</head>
+<body>
+
+<!-- ── 잠금 화면 ── -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">Caligo Admin</div>
+    <div class="lock-sub">비밀번호를 입력하세요</div>
+    <input type="password" id="pw-input" placeholder="••••" maxlength="8"
+      onkeydown="if(event.key==='Enter') checkPw()"
+      oninput="document.getElementById('pw-input').classList.remove('shake');document.getElementById('pw-err').textContent=''">
+    <div class="lock-error" id="pw-err"></div>
+    <button class="btn btn-p" style="width:100%" onclick="checkPw()">입력</button>
+  </div>
+</div>
+
+<div class="layout" id="app-layout" style="display:none">
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="logo">🌙 Caligo Admin</div>
+  <div class="nav-section">현황</div>
+  <button class="nav-item active" onclick="showPage('dashboard')">
+    <span class="nav-icon">◈</span> 대시보드
+  </button>
+  <div class="nav-section">데이터 관리</div>
+  <button class="nav-item" onclick="showPage('stores')">
+    <span class="nav-icon">🏪</span> 판매처
+  </button>
+  <button class="nav-item" onclick="showPage('distributors')">
+    <span class="nav-icon">📦</span> 배급사
+  </button>
+  <button class="nav-item" onclick="showPage('unpo')">
+    <span class="nav-icon">📸</span> 미공포
+  </button>
+  <div class="nav-section">출력</div>
+  <button class="nav-item" onclick="showPage('github')">
+    <span class="nav-icon">⚙</span> GitHub 연동
+  </button>
+  <button class="nav-item" onclick="showPage('export')">
+    <span class="nav-icon">⬇</span> 파일 내보내기
+  </button>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+<!-- ─ Dashboard ─ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="page-title">대시보드</div>
+      <div class="page-sub">PLAVE Caligo Pt.2 구매관리 데이터 현황</div>
+    </div>
+  </div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="card">
+    <div class="card-title">📸 미공포 등록 현황</div>
+    <div id="unpo-summary"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚠️ 이미지 미등록 판매처</div>
+    <div id="missing-imgs"></div>
+  </div>
+</div>
+
+<!-- ─ Stores ─ -->
+<div class="page" id="page-stores">
+  <div class="page-header">
+    <div>
+      <div class="page-title">판매처 관리</div>
+      <div class="page-sub">판매처 추가·수정·삭제</div>
+    </div>
+    <button class="btn btn-p" onclick="openStoreModal()">+ 판매처 추가</button>
+  </div>
+  <div class="card">
+    <table id="stores-table">
+      <thead><tr>
+        <th>판매처명</th><th>배급사</th><th>국가</th><th>미공포 종류</th>
+        <th>구매기간</th><th>영통</th><th></th>
+      </tr></thead>
+      <tbody id="stores-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─ Distributors ─ -->
+<div class="page" id="page-distributors">
+  <div class="page-header">
+    <div>
+      <div class="page-title">배급사 관리</div>
+      <div class="page-sub">배급사 추가·수정</div>
+    </div>
+    <button class="btn btn-p" onclick="openDistModal()">+ 배급사 추가</button>
+  </div>
+  <div class="card">
+    <table id="dist-table">
+      <thead><tr><th>배급사명</th><th>ID</th><th>연결된 판매처</th><th></th></tr></thead>
+      <tbody id="dist-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─ Unpo ─ -->
+<div class="page" id="page-unpo">
+  <div class="page-header">
+    <div>
+      <div class="page-title">미공포 이미지 관리</div>
+      <div class="page-sub">카드를 클릭해서 이미지를 업로드하세요</div>
+    </div>
+    <div class="flex">
+      <select id="unpo-section-filter" onchange="renderUnpoPage()" style="width:auto">
+        <option value="">전체 섹션</option>
+        <option value="INVENTORY">INVENTORY</option>
+        <option value="PHOTOBOOK">PHOTOBOOK</option>
+        <option value="ID_PASS">ID PASS</option>
+        <option value="POCAALBUM">POCAALBUM</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 공유 그룹 관리 -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title" style="justify-content:space-between">
+      <span>🔗 공유 그룹 <span class="text-muted text-sm" style="font-weight:400">(같은 미공포를 공유하는 판매처 — 카운트 중복 제거)</span></span>
+      <button class="btn btn-ghost btn-sm" onclick="openSharedModal()">+ 추가</button>
+    </div>
+    <div id="shared-group-list"></div>
+  </div>
+
+  <div id="unpo-page-content"></div>
+</div>
+
+<!-- ─ GitHub 연동 ─ -->
+<div class="page" id="page-github">
+  <div class="page-header">
+    <div>
+      <div class="page-title">GitHub 연동</div>
+      <div class="page-sub">이미지를 업로드하면 자동으로 GitHub에 커밋됩니다</div>
+    </div>
+    <div id="gh-status-badge"></div>
+  </div>
+
+  <div class="card" id="gh-setup-card">
+    <div class="card-title">🔑 GitHub 설정</div>
+    <div class="form-row cols-2">
+      <div>
+        <label>GitHub 사용자명</label>
+        <input id="gh-owner" placeholder="예: yourname" oninput="saveGhConfig()">
+      </div>
+      <div>
+        <label>레포지토리명</label>
+        <input id="gh-repo" placeholder="예: caligo-pt2" oninput="saveGhConfig()">
+      </div>
+    </div>
+    <div class="form-row cols-2">
+      <div>
+        <label>브랜치</label>
+        <input id="gh-branch" placeholder="main" value="main" oninput="saveGhConfig()">
+      </div>
+      <div>
+        <label>Personal Access Token
+          <a href="https://github.com/settings/tokens/new?scopes=repo&description=Caligo+Admin"
+             target="_blank" style="color:var(--info);font-size:11px;margin-left:4px">→ 발급</a>
+        </label>
+        <input id="gh-token" type="password" placeholder="ghp_..." oninput="saveGhConfig()">
+      </div>
+    </div>
+    <div class="flex" style="gap:10px;margin-top:4px">
+      <button class="btn btn-ghost" onclick="testGhConnection()">연결 테스트</button>
+      <div id="gh-test-result" class="text-sm text-muted"></div>
+    </div>
+    <hr class="divider">
+    <div style="font-size:12px;color:var(--tx3);line-height:1.8">
+      <b style="color:var(--tx2)">Token 권한:</b> repo (Full control) 필요<br>
+      <b style="color:var(--tx2)">저장 위치:</b> 브라우저 localStorage (서버에 전송 안됨)<br>
+      <b style="color:var(--tx2)">배포:</b> push 후 GitHub Pages 자동 배포 (~1분)
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 자동 커밋 로그</div>
+    <div id="gh-commit-log" style="font:12px/1.8 monospace;color:var(--tx2);max-height:300px;overflow-y:auto">
+      <div class="empty">아직 커밋이 없습니다</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💡 사용법</div>
+    <ol style="font-size:13px;color:var(--tx2);line-height:2;padding-left:20px">
+      <li>위에서 GitHub 설정을 입력하고 <b style="color:var(--tx)">연결 테스트</b>를 확인하세요</li>
+      <li><b style="color:var(--tx)">미공포</b> 탭에서 카드를 클릭해 이미지를 업로드하세요</li>
+      <li>이미지가 자동으로 GitHub <code>images/</code> 폴더에 push됩니다</li>
+      <li><code>unpo.js</code>도 자동으로 업데이트되어 함께 커밋됩니다</li>
+      <li>약 1분 후 GitHub Pages에 반영됩니다</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ─ Export ─ -->
+<div class="page" id="page-export">
+  <div class="page-header">
+    <div>
+      <div class="page-title">파일 내보내기</div>
+      <div class="page-sub">수정된 data.js · unpo.js를 다운로드하거나 GitHub에 바로 push하세요</div>
+    </div>
+    <div class="flex" style="gap:8px">
+      <button class="btn btn-p" onclick="pushAllToGitHub()">🚀 GitHub에 push</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📁 저장 방식 안내</div>
+    <pre style="font:12px/1.7 monospace;color:var(--tx2);padding:4px 0"><span style="color:var(--pk)">🚀 GitHub에 저장</span> 버튼 클릭 시:
+
+  1. 업로드된 이미지 → <span style="color:var(--warn)">images/</span> 폴더에 push
+  2. <span style="color:var(--ok)">index.html</span> 내 데이터 블록 직접 교체 후 push
+       ├── var DISTRIBUTORS = [...]   ← 배급사
+       ├── var STORES = [...]          ← 판매처
+       ├── var UNPO_MULTI_SETS = {...}
+       ├── var UNPO_SHARED = [...]
+       └── var UNPO_DATA = {...}        ← 미공포 세트·이미지
+
+  약 1분 후 GitHub Pages에 자동 반영됩니다.</pre>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <div class="card-title">data.js <span class="text-muted text-sm">(참고용)</span></div>
+      <p class="text-sm text-muted" style="margin-bottom:12px">현재 STATE 미리보기 (GitHub push는 index.html에 직접 반영됩니다)</p>
+      <button class="btn btn-ok" onclick="downloadDataJs()">⬇ data.js 다운로드</button>
+      <hr class="divider">
+      <div class="export-box" id="export-data-js" style="font-size:11px">로딩중...</div>
+    </div>
+    <div class="card">
+      <div class="card-title">unpo.js <span class="text-muted text-sm">(참고용)</span></div>
+      <p class="text-sm text-muted" style="margin-bottom:12px">현재 STATE 미리보기 (GitHub push는 index.html에 직접 반영됩니다)</p>
+      <button class="btn btn-ok" onclick="downloadUnpoJs()">⬇ unpo.js 다운로드</button>
+      <hr class="divider">
+      <div class="export-box" id="export-unpo-js" style="font-size:11px">로딩중...</div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- ── Store Modal ── -->
+<div class="modal-bg" id="store-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="store-modal-title">판매처 추가</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('store-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sm-edit-idx" value="">
+      <div class="form-row cols-2">
+        <div><label>판매처명</label><input id="sm-name" placeholder="예: 위드뮤"></div>
+        <div><label>배급사</label>
+          <select id="sm-dist">
+            <option value="">배급사 선택</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row cols-3">
+        <div><label>국가</label>
+          <select id="sm-country">
+            <option value="KR">🇰🇷 한국</option>
+            <option value="JP">🇯🇵 일본</option>
+            <option value="CN">🇨🇳 중국</option>
+            <option value="TW">🇹🇼 대만</option>
+            <option value="US">🇺🇸 미국</option>
+            <option value="OTHER">🌐 기타</option>
+          </select>
+        </div>
+        <div><label>미공포 종류</label>
+          <select id="sm-perk" onchange="smUpdateUnpoOptions()">
+            <option value="">없음</option>
+            <option value="INVENTORY">INVENTORY</option>
+            <option value="PHOTOBOOK">PHOTOBOOK</option>
+            <option value="ID_PASS">ID PASS</option>
+            <option value="POCAALBUM">POCAALBUM</option>
+          </select>
+        </div>
+        <div><label>영통응모</label>
+          <select id="sm-vc">
+            <option value="false">없음</option>
+            <option value="true">있음</option>
+          </select>
+        </div>
+      </div>
+      <div id="sm-unpo-options" style="display:none">
+        <div class="form-row cols-2">
+          <div>
+            <label>미공포 세트 수</label>
+            <select id="sm-unpo-sets">
+              <option value="1">1세트</option>
+              <option value="2">2세트</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:2px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 0">
+              <input type="checkbox" id="sm-unpo-back"> 뒷면 포함
+              <span class="text-muted text-sm" style="font-weight:400">(앞면 5장 + 뒷면 1장)</span>
+            </label>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--tx3);margin-bottom:4px;margin-top:-4px">
+          ※ 각 세트는 사진이 겹칠 수 있습니다
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div><label>구매 시작</label><input id="sm-start" type="datetime-local"></div>
+        <div><label>구매 종료</label><input id="sm-end" type="datetime-local"></div>
+      </div>
+      <div class="form-row cols-2">
+        <div><label>오프라인 시작</label><input id="sm-off-start" type="date"></div>
+        <div><label>오프라인 종료</label><input id="sm-off-end" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div><label>오프라인 장소</label><input id="sm-off-addr" placeholder="예: 케타포 인사 / 코엑스"></div>
+      </div>
+      <div class="form-row">
+        <div><label>오프라인 시간</label><input id="sm-off-hours" placeholder="예: 11:00 - 20:00"></div>
+      </div>
+      <div class="form-row">
+        <div><label>오프라인 노트</label><textarea id="sm-off-note" rows="2" placeholder="예: 포카앨범 구매 시 미공포&#10;스페셜메뉴 구매 시 랜덤 1종"></textarea></div>
+      </div>
+      <div class="form-row">
+        <div><label>구매 URL</label><input id="sm-url" placeholder="https://..."></div>
+      </div>
+      <div class="form-row">
+        <div><label>메모</label><input id="sm-memo" placeholder="영통 발표일 등"></div>
+      </div>
+      <div class="form-row cols-3">
+        <div><label>국내 배송비 (원)</label><input id="sm-dom-ship" type="number" value="0"></div>
+        <div><label>해외 배송비 (원)</label><input id="sm-ovs-ship" type="number" value="0"></div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:2px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="sm-lucky"> 럭키드로우
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>판매 방식</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r-sm);font-size:13px">
+              <input type="radio" name="sm-pm" value="country" onchange="smUpdatePriceMode()"> 국가 기준 단가
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:7px 12px;background:var(--sur2);border:1px solid var(--bd2);border-radius:var(--r-sm);font-size:13px">
+              <input type="radio" name="sm-pm" value="custom" onchange="smUpdatePriceMode()"> 앨범별 직접 설정
+            </label>
+          </div>
+        </div>
+      </div>
+      <div id="sm-custom-prices" style="display:none">
+        <div class="form-row">
+          <div>
+            <label style="font-size:12px;color:var(--tx3);margin-bottom:8px;display:block">단가 직접 설정 — <b>미판매</b> 체크 시 해당 앨범 숨김</label>
+            <div style="display:flex;flex-direction:column;gap:8px" id="sm-album-rows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('store-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveStore()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Distributor Modal ── -->
+<div class="modal-bg" id="dist-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="dist-modal-title">배급사 추가</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('dist-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="dm-edit-idx" value="">
+      <div class="form-row">
+        <div><label>배급사명</label><input id="dm-name" placeholder="예: 위드뮤"></div>
+      </div>
+      <div class="form-row">
+        <div><label>ID <span class="text-muted">(자동생성 가능)</span></label>
+          <div class="flex">
+            <input id="dm-id" placeholder="dcs..." class="flex-1">
+            <button class="btn btn-ghost btn-sm" onclick="genDistId()">자동생성</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('dist-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveDist()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const STATE = {
+  distributors: [],
+  stores: [],
+  unpoData: {},
+  multiSets: {},
+  shared: [],
+  dirty: false,
+  pendingImages: {},   // { imagePath: { dataUrl, filename, ... } }
+  previewUrls: {},     // { imagePath: dataUrl } — 업로드 후 admin 내 미리보기용
+  pendingDataJs: false,
+  pendingUnpoJs: false,
+};
+
+const SECTION_LABELS = {
+  INVENTORY: 'INVENTORY', PHOTOBOOK: 'PHOTOBOOK',
+  ID_PASS: 'ID PASS', POCAALBUM: 'POCAALBUM'
+};
+const MEMBERS_5 = ['yejun','noa','bambi','eunho','hamin'];
+const MEMBERS_6 = [...MEMBERS_5, 'back'];
+const MEMBER_KO  = {bambi:'밤비',yejun:'예준',eunho:'은호',hamin:'하민',noa:'노아',back:'뒷면',group:'뒷면'};
+
+// ═══════════════════════════════════════════════
+// 비밀번호 잠금
+// ═══════════════════════════════════════════════
+const PW_ENC = 'MDMxMg==';  // btoa("0312")
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if(btoa(val) === PW_ENC) {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-layout').style.display  = 'grid';
+    document.getElementById('save-bar').style.left = '220px';
+    sessionStorage.setItem('admin_unlocked', '1');
+    init();
+  } else {
+    const inp = document.getElementById('pw-input');
+    const err = document.getElementById('pw-err');
+    inp.value = '';
+    inp.classList.add('shake');
+    err.textContent = '비밀번호가 틀렸습니다';
+    setTimeout(() => inp.classList.remove('shake'), 400);
+  }
+}
+
+// 세션 내 재접속 시 자동 잠금 해제
+if(sessionStorage.getItem('admin_unlocked') === '1') {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app-layout').style.display  = 'grid';
+  });
+}
+
+// ═══════════════════════════════════════════════
+// LOAD DATA FROM SIBLING JS FILES
+// ═══════════════════════════════════════════════
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function init() {
+  // 1. 로컬 js 파일 시도 (서버 환경)
+  let loaded = false;
+  try {
+    await loadScript('../js/data.js');
+    await loadScript('../js/unpo.js');
+    loaded = true;
+  } catch(e) {
+    console.warn('로컬 JS 로드 실패, GitHub에서 직접 로드 시도:', e);
+  }
+
+  if(loaded) {
+    STATE.distributors = JSON.parse(JSON.stringify(window.DISTRIBUTORS || []));
+    STATE.stores       = JSON.parse(JSON.stringify(window.STORES || []));
+    STATE.unpoData     = JSON.parse(JSON.stringify(window.UNPO_DATA || {}));
+    STATE.multiSets    = JSON.parse(JSON.stringify(window.UNPO_MULTI_SETS || {}));
+    STATE.shared       = JSON.parse(JSON.stringify(window.UNPO_SHARED || []));
+  } else {
+    // 2. GitHub에서 index.html 직접 fetch해서 파싱
+    await loadFromGitHub();
+  }
+
+  renderAll();
+  loadGhConfig();
+  updateGhStatusBadge();
+}
+
+// GitHub에서 index.html을 받아 데이터 블록을 파싱해서 STATE에 채움
+async function loadFromGitHub() {
+  const cfg = getGhConfig();
+  if(!cfg.owner || !cfg.repo || !cfg.token) {
+    showToast('GitHub 설정이 없습니다. GitHub 연동 탭에서 먼저 설정하세요.', 'warn');
+    return;
+  }
+  try {
+    showToast('GitHub에서 데이터 로드 중...', 'info');
+    const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}/contents/index.html?ref=${cfg.branch}`, 'GET');
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const fileData = await res.json();
+    const raw = fileData.content.replace(/\n/g, '');
+    const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+    const html = new TextDecoder('utf-8').decode(bytes);
+
+    // 각 변수 블록을 eval로 파싱
+    STATE.distributors = extractVar(html, 'DISTRIBUTORS') || [];
+    STATE.stores       = extractVar(html, 'STORES')       || [];
+    STATE.unpoData     = extractVar(html, 'UNPO_DATA')    || {};
+    STATE.multiSets    = extractVar(html, 'UNPO_MULTI_SETS') || {};
+    STATE.shared       = extractVar(html, 'UNPO_SHARED')  || [];
+    showToast('✓ GitHub에서 데이터 로드 완료', 'ok');
+  } catch(e) {
+    console.error('GitHub 로드 실패:', e);
+    showToast(`GitHub 로드 실패: ${e.message}`, 'err');
+  }
+}
+
+// html 문자열에서 var NAME = ...; 블록을 추출해 JSON.parse
+function extractVar(html, varName) {
+  const startMarker = `var ${varName} = `;
+  const startIdx = html.indexOf(startMarker);
+  if(startIdx === -1) return null;
+  const valueStart = startIdx + startMarker.length;
+  const firstChar = html[valueStart];
+  const closeChar = firstChar === '[' ? ']' : '}';
+  let depth = 0, endIdx = -1;
+  for(let i = valueStart; i < html.length; i++) {
+    const ch = html[i];
+    if(ch === firstChar) depth++;
+    else if(ch === closeChar) {
+      depth--;
+      if(depth === 0) { endIdx = i + 1; break; }
+    }
+  }
+  if(endIdx === -1) return null;
+  try {
+    return JSON.parse(html.slice(valueStart, endIdx));
+  } catch(e) {
+    console.warn(`extractVar(${varName}) JSON.parse 실패:`, e);
+    return null;
+  }
+}
+
+function showFallbackNotice() {
+  // 더 이상 전체 화면 대체하지 않음 — init에서 빈 STATE로 처리
+}
+
+// ═══════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════
+function renderAll() {
+  renderDashboard();
+  renderStoresTable();
+  renderDistTable();
+  renderSharedGroups();
+  renderUnpoPage();
+  renderExport();
+}
+
+function renderDashboard() {
+  // Stats
+  const totalImgs = countImgs(true);
+  const missingImgs = countImgs(false);
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${STATE.stores.length}</div><div class="stat-label">판매처</div></div>
+    <div class="stat-card"><div class="stat-num">${STATE.distributors.length}</div><div class="stat-label">배급사</div></div>
+    <div class="stat-card"><div class="stat-num">${totalImgs}</div><div class="stat-label">미공포 등록</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:${missingImgs>0?'var(--warn)':'var(--ok)'}">${missingImgs}</div><div class="stat-label">미등록</div></div>
+  `;
+
+  // Unpo summary per section
+  let summaryHtml = '<table><thead><tr><th>섹션</th><th>판매처</th><th>세트수</th><th>등록</th><th>미등록</th></tr></thead><tbody>';
+  Object.entries(STATE.unpoData).forEach(([section, stores]) => {
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      let reg = 0, miss = 0;
+      sets.forEach(s => {
+        const cards = Array.isArray(s) ? s : (s.cards || []);
+        cards.forEach(c => { if(c.img) reg++; else miss++; });
+      });
+      summaryHtml += `<tr>
+        <td><span class="badge badge-pk">${section}</span></td>
+        <td>${storeName}</td>
+        <td>${sets.length}세트</td>
+        <td><span class="badge badge-ok">${reg}</span></td>
+        <td><span class="badge ${miss>0?'badge-warn':'badge-gray'}">${miss}</span></td>
+      </tr>`;
+    });
+  });
+  summaryHtml += '</tbody></table>';
+  document.getElementById('unpo-summary').innerHTML = summaryHtml;
+
+  // Missing images
+  const missing = [];
+  Object.entries(STATE.unpoData).forEach(([section, stores]) => {
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      sets.forEach((s, si) => {
+        const cards = Array.isArray(s) ? s : (s.cards || []);
+        const memo  = Array.isArray(s) ? '' : (s.memo || '');
+        const hasNull = cards.some(c => !c.img);
+        if(hasNull) missing.push({section, storeName, setIdx: si, memo});
+      });
+    });
+  });
+  document.getElementById('missing-imgs').innerHTML = missing.length === 0
+    ? '<div class="empty">✓ 모든 미공포 이미지가 등록되었습니다</div>'
+    : missing.map(m => `
+      <div class="flex" style="padding:8px 0;border-bottom:1px solid var(--bd)">
+        <span class="badge badge-pk">${m.section}</span>
+        <span style="font-weight:600">${m.storeName}</span>
+        ${m.memo ? `<span class="tag">${m.memo}</span>` : ''}
+        <span class="text-muted text-sm">Set ${m.setIdx+1}</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="showPage('unpo')">등록 →</button>
+      </div>`).join('');
+}
+
+function countImgs(present) {
+  let count = 0;
+  // shared 판매처 목록 (중복 카운트 방지)
+  const sharedSkip = new Set(
+    (STATE.shared || []).map(s => `${s.ak}|||${s.bn}`)
+  );
+  Object.entries(STATE.unpoData).forEach(([section, stores]) => {
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      if(sharedSkip.has(`${section}|||${storeName}`)) return;
+      sets.forEach(s => {
+        const cards = Array.isArray(s) ? s : (s.cards || []);
+        cards.slice(0, 5).forEach(c => { if(present ? !!c.img : !c.img) count++; });
+      });
+    });
+  });
+  return count;
+}
+
+function renderStoresTable() {
+  const tbody = document.getElementById('stores-tbody');
+  if(!STATE.stores.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">판매처가 없습니다</td></tr>'; return; }
+  tbody.innerHTML = STATE.stores.map((s, i) => {
+    const dist = STATE.distributors.find(d => d.id === s.distId);
+    const start = s.purchaseStart ? s.purchaseStart.slice(0,10) : '-';
+    const end   = s.purchaseEnd   ? s.purchaseEnd.slice(0,10)   : '-';
+    const perk  = s.unpoPerk || '';
+    return `<tr>
+      <td style="font-weight:600">${s.name}</td>
+      <td class="text-muted">${dist ? dist.name : s.distId || '-'}</td>
+      <td><span class="badge badge-info">${s.country}</span></td>
+      <td>${perk
+          ? `<span class="badge badge-pk">${perk}</span>
+             ${s.unpoSets > 1 ? `<span class="badge badge-info" style="margin-left:3px">${s.unpoSets}세트</span>` : ''}
+             ${s.unpoBack ? `<span class="badge badge-gray" style="margin-left:3px">뒷면↩</span>` : ''}`
+          : '<span class="text-muted">-</span>'}</td>
+      <td class="text-muted text-sm">${start} ~ ${end}</td>
+      <td>${s.videocall ? '<span class="dot-ok"></span>' : '<span class="dot-none"></span>'}</td>
+      <td>
+        <div class="flex">
+          <button class="btn btn-ghost btn-sm" onclick="editStore(${i})">수정</button>
+          <button class="btn btn-err btn-sm" onclick="deleteStore(${i})">삭제</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDistTable() {
+  const tbody = document.getElementById('dist-tbody');
+  if(!STATE.distributors.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">배급사가 없습니다</td></tr>'; return; }
+  tbody.innerHTML = STATE.distributors.map((d, i) => {
+    const linked = STATE.stores.filter(s => s.distId === d.id);
+    return `<tr>
+      <td style="font-weight:600">${d.name}</td>
+      <td><code>${d.id}</code></td>
+      <td>${linked.length ? linked.map(s => `<span class="tag">${s.name}</span>`).join('') : '<span class="text-muted">-</span>'}</td>
+      <td>
+        <div class="flex">
+          <button class="btn btn-ghost btn-sm" onclick="editDist(${i})">수정</button>
+          <button class="btn btn-err btn-sm" onclick="deleteDist(${i})">삭제</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUnpoPage() {
+  const filter = document.getElementById('unpo-section-filter').value;
+  const container = document.getElementById('unpo-page-content');
+  let h = '';
+  Object.entries(STATE.unpoData).forEach(([section, stores]) => {
+    if(filter && section !== filter) return;
+    h += `<div class="unpo-section">
+      <div class="unpo-section-title">${SECTION_LABELS[section] || section}</div>`;
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      const esc = encodeURIComponent(storeName);
+      const isShared = (STATE.shared||[]).some(s => s.ak===section && s.bn===storeName);
+      const sharedSrc = isShared
+        ? (STATE.shared.find(s => s.ak===section && s.bn===storeName)?.sharedWith)
+        : null;
+      h += `<div class="unpo-store">
+        <div class="unpo-store-header">
+          <span class="unpo-store-name">${storeName}</span>
+          ${isShared ? `<span class="badge badge-warn" title="카운트 제외됨 (${sharedSrc?.bn||''}와 공유)">🔗 공유됨</span>` : `<span class="badge badge-gray">${sets.length}세트</span>`}
+          ${sets.length < 2 ? `<button class="btn btn-ghost btn-sm" onclick="addUnpoSet('${section}','${esc}')">+ 세트 추가</button>` : `<span class="text-muted text-sm" style="font-size:11px">최대 2세트</span>`}
+          <button class="btn btn-err btn-sm" onclick="removeUnpoStore('${section}','${esc}')">판매처 제거</button>
+        </div>
+        <div class="unpo-sets">`;
+      sets.forEach((s, si) => {
+        const isFlat = Array.isArray(s);
+        const cards  = isFlat ? s : (s.cards || []);
+        const memo   = isFlat ? '' : (s.memo || '');
+        const members = cards.length === 6 ? MEMBERS_6 : MEMBERS_5;
+        h += `<div class="unpo-set">
+          <div class="unpo-set-controls">
+            <span class="unpo-set-label" style="margin:0">Set ${si+1}</span>
+            <input class="unpo-set-memo" style="background:var(--sur2);border:1px solid var(--bd);border-radius:var(--r-sm);padding:3px 8px;font-size:12px;color:var(--tx2);width:180px"
+              placeholder="세트 메모 (예: 럭키드로우)" value="${memo}"
+              oninput="setUnpoMemo('${section}','${esc}',${si},this.value)">
+            <button class="back-toggle ${cards.length >= 6 ? 'active' : ''}"
+              onclick="toggleUnpoBack('${section}','${esc}',${si})">
+              ↩ 뒷면 ${cards.length >= 6 ? '포함' : '없음'}
+            </button>
+            ${sets.length > 1 ? `<button class="btn btn-err btn-sm" onclick="removeUnpoSet('${section}','${esc}',${si})">세트 삭제</button>` : ''}
+          </div>
+          <div class="unpo-cards">`;
+        // 앞면 5장 렌더링
+        const frontCards = cards.slice(0, 5);
+        frontCards.forEach((card, ci) => {
+          const member = members[ci] || `card${ci}`;
+          const memberKo = MEMBER_KO[member] || member;
+          const img = card.img;
+          const note = card.note || '';
+          const displaySrc = img ? (STATE.previewUrls[img] || img) : null;
+          h += `<div class="unpo-card-wrap">
+            <div class="unpo-card" title="${memberKo}">
+              ${displaySrc
+                ? `<img src="${displaySrc}" alt="${memberKo}" onerror="this.style.display='none'">`
+                : `<div class="no-img"><span>📷</span><span>${memberKo}</span></div>`}
+              <div class="member-label">${memberKo}</div>
+              <div class="upload-hint">⬆</div>
+              <input type="file" accept="image/*" onchange="uploadUnpoImg(event,'${section}','${esc}',${si},${ci})">
+              ${note ? `<div class="card-note-badge">📝</div>` : ''}
+            </div>
+            <div class="card-ctrl-bar">
+              <button onclick="openNoteModal('${section}','${esc}',${si},${ci},'${note.replace(/'/g,"\'")}')">📝</button>
+              ${img ? `<button onclick="clearUnpoImg('${section}','${esc}',${si},${ci})">✕</button>` : ''}
+            </div>
+          </div>`;
+        });
+        h += `</div>`;
+        // 뒷면 카드 (6번째, 있을 때만 표시)
+        if(cards.length >= 6) {
+          const backCard = cards[5];
+          const backImg = backCard?.img;
+          const backDisplaySrc = backImg ? (STATE.previewUrls[backImg] || backImg) : null;
+          const backNote = backCard?.note || '';
+          h += `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--bd)">
+            <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;font-weight:600">↩ 뒷면 카드</div>
+            <div class="flex" style="gap:8px;align-items:flex-start">
+              <div class="unpo-card-wrap">
+                <div class="unpo-card" title="뒷면" style="width:60px">
+                  ${backDisplaySrc
+                    ? `<img src="${backDisplaySrc}" alt="뒷면" onerror="this.style.display='none'">`
+                    : `<div class="no-img"><span>↩</span><span>뒷면</span></div>`}
+                  <div class="member-label">뒷면</div>
+                  <div class="upload-hint">⬆</div>
+                  <input type="file" accept="image/*" onchange="uploadUnpoImg(event,'${section}','${esc}',${si},5)">
+                </div>
+                <div class="card-ctrl-bar">
+                  <button onclick="openNoteModal('${section}','${esc}',${si},5,'${backNote.replace(/'/g,"\'")}')">📝</button>
+                  ${backImg ? `<button onclick="clearUnpoImg('${section}','${esc}',${si},5)">✕</button>` : ''}
+                </div>
+              </div>
+              ${backNote ? `<div style="font-size:12px;color:var(--tx2);padding-top:4px">${backNote}</div>` : ''}
+            </div>
+          </div>`;
+        }
+        h += `</div>`;
+      });
+      h += `</div></div>`;
+    });
+    h += `</div>`;
+  });
+  container.innerHTML = h || '<div class="empty">표시할 데이터가 없습니다</div>';
+}
+
+function renderExport() {
+  document.getElementById('export-data-js').textContent = generateDataJs().slice(0, 2000) + '\n...(생략)...';
+  document.getElementById('export-unpo-js').textContent = generateUnpoJs().slice(0, 2000) + '\n...(생략)...';
+}
+
+// ═══════════════════════════════════════════════
+// STORE CRUD
+// ═══════════════════════════════════════════════
+function openStoreModal(editIdx = null) {
+  document.getElementById('store-modal-title').textContent = editIdx !== null ? '판매처 수정' : '판매처 추가';
+  document.getElementById('sm-edit-idx').value = editIdx !== null ? editIdx : '';
+
+  // 배급사 목록
+  const distSel = document.getElementById('sm-dist');
+  distSel.innerHTML = '<option value="">배급사 선택</option>' +
+    STATE.distributors.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+
+  if(editIdx !== null) {
+    const s = STATE.stores[editIdx];
+    document.getElementById('sm-name').value       = s.name || '';
+    distSel.value                                   = s.distId || '';
+    document.getElementById('sm-country').value    = s.country || 'KR';
+    document.getElementById('sm-perk').value       = s.unpoPerk || '';
+    document.getElementById('sm-vc').value         = String(s.videocall || false);
+    // 미공포 옵션
+    document.getElementById('sm-unpo-sets').value  = String(s.unpoSets || 1);
+    document.getElementById('sm-unpo-back').checked = s.unpoBack || false;
+    smUpdateUnpoOptions();
+    document.getElementById('sm-start').value      = s.purchaseStart || '';
+    document.getElementById('sm-end').value        = s.purchaseEnd   || '';
+    document.getElementById('sm-off-start').value  = s.offlineStart  || '';
+    document.getElementById('sm-off-end').value    = s.offlineEnd    || '';
+    document.getElementById('sm-off-addr').value   = s.offlineAddress|| '';
+    document.getElementById('sm-off-hours').value  = s.offlineHours  || '';
+    document.getElementById('sm-off-note').value   = s.offlineNote   || '';
+    document.getElementById('sm-url').value        = s.url || '';
+    document.getElementById('sm-memo').value       = s.memo || '';
+    document.getElementById('sm-dom-ship').value   = s.defDomShip || 0;
+    document.getElementById('sm-ovs-ship').value   = s.defOvsShip || 0;
+    document.getElementById('sm-lucky').checked    = s.offlineLuckyDraw || false;
+    // priceMode 설정
+    const pm = s.priceMode || 'country';
+    document.querySelector(`input[name="sm-pm"][value="${pm === 'nosale' ? 'custom' : pm}"]`).checked = true;
+    smUpdatePriceMode(s.customPrices || {});
+  } else {
+    document.querySelector('input[name="sm-pm"][value="country"]').checked = true;
+    smUpdatePriceMode({});
+    ['sm-name','sm-start','sm-end','sm-off-start','sm-off-end','sm-off-addr','sm-off-hours','sm-off-note','sm-url','sm-memo'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('sm-vc').value = 'false';
+    document.getElementById('sm-dom-ship').value = 0;
+    document.getElementById('sm-ovs-ship').value = 0;
+    document.getElementById('sm-lucky').checked = false;
+    document.getElementById('sm-unpo-sets').value = '1';
+    document.getElementById('sm-unpo-back').checked = false;
+    smUpdateUnpoOptions();
+  }
+  document.getElementById('store-modal').classList.add('open');
+}
+
+function editStore(i) { openStoreModal(i); }
+
+function saveStore() {
+  const idx = document.getElementById('sm-edit-idx').value;
+  const pm = document.querySelector('input[name="sm-pm"]:checked')?.value || 'country';
+  const customPrices = {};
+  if(pm === 'custom') {
+    ['PHOTOBOOK','POCAALBUM','ID_PASS','INVENTORY'].forEach(k => {
+      const chk = document.getElementById(`sm-chk-${k}`);
+      if(chk && chk.checked) { customPrices[k] = null; return; } // 미판매
+      const v = parseFloat(document.getElementById(`sm-price-${k}`)?.value);
+      customPrices[k] = isNaN(v) ? null : v;
+    });
+  }
+  const store = {
+    name:          document.getElementById('sm-name').value.trim(),
+    distId:        document.getElementById('sm-dist').value,
+    country:       document.getElementById('sm-country').value,
+    unpoPerk:      document.getElementById('sm-perk').value || null,
+    unpoSets:      parseInt(document.getElementById('sm-unpo-sets').value) || 1,
+    unpoBack:      document.getElementById('sm-unpo-back').checked,
+    priceMode:     pm,
+    customPrices:  pm === 'custom' ? customPrices : null,
+    purchaseStart: document.getElementById('sm-start').value,
+    purchaseEnd:   document.getElementById('sm-end').value,
+    purchaseEndTxt:'',
+    defDeliveryDate:'',
+    offlineStart:  document.getElementById('sm-off-start').value,
+    offlineEnd:    document.getElementById('sm-off-end').value,
+    offlineHours:  document.getElementById('sm-off-hours').value,
+    offlineAddress:document.getElementById('sm-off-addr').value,
+    offlineNote:   document.getElementById('sm-off-note').value,
+    offlineLuckyDraw: document.getElementById('sm-lucky').checked,
+    defDomShip:    Number(document.getElementById('sm-dom-ship').value) || 0,
+    defOvsShip:    Number(document.getElementById('sm-ovs-ship').value) || 0,
+    url:           document.getElementById('sm-url').value,
+    videocall:     document.getElementById('sm-vc').value === 'true',
+    memo:          document.getElementById('sm-memo').value,
+    custom:        true,
+    id:            idx !== '' ? STATE.stores[idx].id : 'cs' + Date.now(),
+  };
+  if(!store.name) { alert('판매처명을 입력하세요'); return; }
+  const isNew = idx === '';
+  if(!isNew) STATE.stores[parseInt(idx)] = store;
+  else STATE.stores.push(store);
+  // 미공포 자동 동기화: 새 판매처이거나 unpoPerk 있는 경우 빈 항목 생성
+  syncUnpoForStore(store, isNew);
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  closeModal('store-modal');
+  renderStoresTable();
+  renderUnpoPage();
+  renderDashboard();
+  renderExport();
+}
+
+function deleteStore(i) {
+  const store = STATE.stores[i];
+  if(!confirm(`"${store.name}" 판매처를 삭제하시겠습니까?`)) return;
+  removeUnpoForStore(store);
+  STATE.stores.splice(i, 1);
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  renderStoresTable();
+  renderUnpoPage();
+  renderDashboard();
+  renderExport();
+}
+
+function parseNum(id) {
+  const v = document.getElementById(id)?.value;
+  return (v == null || v === '') ? null : Number(v);
+}
+
+// 앨범별 가격/미판매 UI 동적 생성
+const ALBUM_KEYS = [
+  {k:'PHOTOBOOK', lb:'PHOTOBOOK'},
+  {k:'POCAALBUM', lb:'POCAALBUM'},
+  {k:'ID_PASS',   lb:'ID PASS'},
+  {k:'INVENTORY', lb:'INVENTORY'},
+];
+
+function smUpdateUnpoOptions() {
+  const perk = document.getElementById('sm-perk').value;
+  const box = document.getElementById('sm-unpo-options');
+  if(!box) return;
+  box.style.display = perk ? '' : 'none';
+}
+
+function smUpdatePriceMode(existingPrices) {
+  const pm = document.querySelector('input[name="sm-pm"]:checked')?.value;
+  const box = document.getElementById('sm-custom-prices');
+  const rows = document.getElementById('sm-album-rows');
+  if(!box || !rows) return;
+
+  if(pm !== 'custom') { box.style.display = 'none'; return; }
+  box.style.display = '';
+
+  // 현재 편집 중인 store의 customPrices 가져오기
+  const cp = existingPrices !== undefined ? existingPrices
+    : (() => {
+        const idx = document.getElementById('sm-edit-idx').value;
+        if(idx !== '') return STATE.stores[parseInt(idx)]?.customPrices || {};
+        return {};
+      })();
+
+  rows.innerHTML = ALBUM_KEYS.map(a => {
+    const isNosale = cp && a.k in cp && cp[a.k] == null;
+    const val = (cp && cp[a.k] != null) ? cp[a.k] : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sur2);border-radius:var(--r-sm);border:1px solid var(--bd)">
+      <span style="font-size:13px;font-weight:500;min-width:90px">${a.lb}</span>
+      <div id="sm-price-wrap-${a.k}" style="${isNosale ? 'display:none;' : ''}flex:1">
+        <input type="number" step="0.01" id="sm-price-${a.k}" value="${val}"
+          placeholder="단가 입력" style="width:100%">
+      </div>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:12px;white-space:nowrap">
+        <input type="checkbox" id="sm-chk-${a.k}" ${isNosale ? 'checked' : ''}
+          onchange="smToggleNosale('${a.k}')">
+        미판매
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function smToggleNosale(k) {
+  const chk = document.getElementById(`sm-chk-${k}`);
+  const wrap = document.getElementById(`sm-price-wrap-${k}`);
+  if(!chk || !wrap) return;
+  wrap.style.display = chk.checked ? 'none' : '';
+  if(!chk.checked) setTimeout(() => document.getElementById(`sm-price-${k}`)?.focus(), 50);
+}
+
+// ═══════════════════════════════════════════════
+// DISTRIBUTOR CRUD
+// ═══════════════════════════════════════════════
+function openDistModal(editIdx = null) {
+  document.getElementById('dist-modal-title').textContent = editIdx !== null ? '배급사 수정' : '배급사 추가';
+  document.getElementById('dm-edit-idx').value = editIdx !== null ? editIdx : '';
+  if(editIdx !== null) {
+    const d = STATE.distributors[editIdx];
+    document.getElementById('dm-name').value = d.name;
+    document.getElementById('dm-id').value   = d.id;
+  } else {
+    document.getElementById('dm-name').value = '';
+    document.getElementById('dm-id').value   = '';
+  }
+  document.getElementById('dist-modal').classList.add('open');
+}
+
+function editDist(i) { openDistModal(i); }
+
+function genDistId() {
+  document.getElementById('dm-id').value = 'dcs' + Date.now();
+}
+
+function saveDist() {
+  const idx = document.getElementById('dm-edit-idx').value;
+  const dist = {
+    name: document.getElementById('dm-name').value.trim(),
+    id:   document.getElementById('dm-id').value.trim() || ('dcs' + Date.now()),
+  };
+  if(!dist.name) { alert('배급사명을 입력하세요'); return; }
+  if(idx !== '') STATE.distributors[parseInt(idx)] = dist;
+  else STATE.distributors.push(dist);
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  closeModal('dist-modal');
+  renderDistTable();
+  renderDashboard();
+  renderExport();
+  // 판매처 모달 배급사 목록 갱신
+}
+
+function deleteDist(i) {
+  if(!confirm(`"${STATE.distributors[i].name}" 배급사를 삭제하시겠습니까?`)) return;
+  STATE.distributors.splice(i, 1);
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  renderDistTable();
+  renderExport();
+}
+
+// ═══════════════════════════════════════════════
+// UNPO DATA 관리
+// ═══════════════════════════════════════════════
+
+function getUnpoSets(section, storeName) {
+  const name = decodeURIComponent(storeName);
+  const sectionData = STATE.unpoData[section];
+  if(!sectionData) return null;
+  // 정확히 일치하는 key 탐색 (encode/decode 불일치 방지)
+  const realKey = Object.keys(sectionData).find(k => k === name);
+  if(realKey === undefined) return null;
+  return sectionData[realKey];
+}
+
+function makeBlankSet(n=5) {
+  const members = n===6 ? ['yejun','noa','bambi','eunho','hamin','back'] : ['yejun','noa','bambi','eunho','hamin'];
+  return { cards: members.map(m => ({ img: null, note: '', owned: false })), memo: '' };
+}
+
+// 판매처 저장 시 UNPO_DATA 자동 동기화
+function syncUnpoForStore(store, isNew) {
+  const perk = store.unpoPerk;
+  const name = store.name;
+  const wantSets = store.unpoSets || 1;
+  const hasBack = store.unpoBack || false;
+  const cardCount = hasBack ? 6 : 5;
+
+  if(!perk) return;
+  if(!STATE.unpoData[perk]) STATE.unpoData[perk] = {};
+
+  if(isNew && !STATE.unpoData[perk][name]) {
+    // 새 판매처: wantSets 개수만큼 빈 세트 생성
+    STATE.unpoData[perk][name] = Array.from({length: wantSets}, () => makeBlankSet(cardCount));
+  } else if(!isNew && STATE.unpoData[perk][name]) {
+    // 기존 판매처 수정: 세트 수·뒷면 동기화 (기존 이미지 보존)
+    const existing = STATE.unpoData[perk][name];
+    // 세트 수 조정
+    while(existing.length < wantSets) existing.push(makeBlankSet(cardCount));
+    if(existing.length > wantSets) existing.splice(wantSets);
+    // 각 세트 카드 수 조정 (이미지 보존)
+    existing.forEach((s, si) => {
+      const isFlat = Array.isArray(s);
+      const cards = isFlat ? s : (s.cards || []);
+      const memo = isFlat ? '' : (s.memo || '');
+      const members = cardCount === 6
+        ? ['yejun','noa','bambi','eunho','hamin','back']
+        : ['yejun','noa','bambi','eunho','hamin'];
+      const newCards = members.map((m, i) => {
+        const ex = cards[i] || {};
+        return { img: ex.img || null, note: ex.note || '', owned: ex.owned || false };
+      });
+      existing[si] = { cards: newCards, memo };
+    });
+  } else if(!isNew && !STATE.unpoData[perk][name]) {
+    // 미공포 데이터가 없었는데 perk 설정된 경우
+    STATE.unpoData[perk][name] = Array.from({length: wantSets}, () => makeBlankSet(cardCount));
+  }
+}
+
+// 판매처 삭제 시 UNPO_DATA에서도 제거
+function removeUnpoForStore(store) {
+  const perk = store.unpoPerk;
+  const name = store.name;
+  if(!perk || !STATE.unpoData[perk]) return;
+  if(STATE.unpoData[perk][name]) {
+    if(!confirm(`"${name}" 미공포 데이터도 함께 삭제하시겠습니까?`)) return;
+    delete STATE.unpoData[perk][name];
+  }
+}
+
+// 세트 추가 (최대 2세트)
+function addUnpoSet(section, storeName) {
+  const name = decodeURIComponent(storeName);
+  // STATE.unpoData에서 실제 존재하는 key를 직접 찾음
+  const sectionData = STATE.unpoData[section];
+  if(!sectionData) { console.warn('addUnpoSet: section not found', section); return; }
+  // 정확히 일치하는 key 탐색
+  const realKey = Object.keys(sectionData).find(k => k === name) ?? name;
+  if(!sectionData[realKey]) { console.warn('addUnpoSet: storeName not found', name); return; }
+  const sets = sectionData[realKey];
+  if(sets.length >= 2) { alert('미공포 세트는 최대 2개까지 추가할 수 있습니다.'); return; }
+  // 기존 첫 세트의 뒷면 여부를 기준으로 새 세트 카드 수 결정
+  const firstSet = sets[0];
+  const firstCards = Array.isArray(firstSet) ? firstSet : (firstSet?.cards || []);
+  const cardCount = firstCards.length >= 6 ? 6 : 5;
+  sets.push(makeBlankSet(cardCount));
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 세트 삭제
+function removeUnpoSet(section, storeName, si) {
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
+  if(sets.length <= 1) { alert('마지막 세트는 삭제할 수 없습니다'); return; }
+  if(!confirm(`Set ${si+1}을 삭제하시겠습니까?`)) return;
+  sets.splice(si, 1);
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 판매처 미공포 항목 제거
+function removeUnpoStore(section, storeName) {
+  const name = decodeURIComponent(storeName);
+  if(!confirm(`"${name}" 미공포 항목을 제거하시겠습니까? (판매처는 유지됩니다)`)) return;
+  if(STATE.unpoData[section]) delete STATE.unpoData[section][name];
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 뒷면 포함/제외 토글
+function toggleUnpoBack(section, storeName, si) {
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
+  const s = sets[si];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  const memo = Array.isArray(s) ? '' : (s.memo || '');
+  const hasBack = cards.length >= 6;
+
+  if(hasBack) {
+    // 뒷면 제거 — 뒷면 이미지가 있으면 확인
+    const backCard = cards[5];
+    if(backCard?.img) {
+      if(!confirm('뒷면 이미지가 등록되어 있습니다. 뒷면을 제거하시겠습니까?')) return;
+    }
+    sets[si] = { cards: cards.slice(0, 5), memo };
+  } else {
+    // 뒷면 추가
+    const newCards = [...cards.slice(0, 5), { img: null, note: '', owned: false }];
+    sets[si] = { cards: newCards, memo };
+  }
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  renderUnpoPage();
+}
+
+// 카드 수 변경 (하위 호환용 — toggleUnpoBack으로 대체됨)
+function setUnpoCardCount(section, storeName, si, n) {
+  toggleUnpoBack(section, storeName, si);
+}
+
+// 세트 메모 변경
+function setUnpoMemo(section, storeName, si, value) {
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
+  const s = sets[si];
+  if(Array.isArray(s)) {
+    sets[si] = { cards: s, memo: value };
+  } else {
+    s.memo = value;
+  }
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+}
+
+// 이미지 삭제
+function clearUnpoImg(section, storeName, si, ci) {
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
+  const s = sets[si];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  if(!confirm('이 카드 이미지를 삭제하시겠습니까?')) return;
+  const oldImg = cards[ci]?.img;
+  if(cards[ci]) cards[ci].img = null;
+  // 미리보기 캐시에서도 제거
+  if(oldImg) delete STATE.previewUrls[oldImg];
+  // 대기열에서도 제거
+  const sec = section;
+  Object.keys(STATE.pendingImages).forEach(k => {
+    if(k.includes(name.toLowerCase().replace(/[^a-z0-9]/g,'_'))) delete STATE.pendingImages[k];
+  });
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  renderUnpoPage();
+  renderDashboard();
+}
+
+// 뒷면 노트 모달
+let _noteCtx = null;
+function openNoteModal(section, storeName, si, ci, currentNote) {
+  _noteCtx = { section, storeName: decodeURIComponent(storeName), si, ci };
+  document.getElementById('note-modal-label').textContent =
+    `${decodeURIComponent(storeName)} / Set ${si+1} / 카드 ${ci+1}`;
+  document.getElementById('note-modal-text').value = currentNote || '';
+  document.getElementById('note-modal').classList.add('open');
+}
+function closeNoteModal() {
+  document.getElementById('note-modal').classList.remove('open');
+  _noteCtx = null;
+}
+function saveNote() {
+  if(!_noteCtx) return;
+  const { section, storeName, si, ci } = _noteCtx;
+  const val = document.getElementById('note-modal-text').value;
+  const sets = getUnpoSets(section, storeName);
+  if(!sets) return;
+  const s = sets[si];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  if(cards[ci]) cards[ci].note = val;
+  STATE.dirty = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  closeNoteModal();
+  renderUnpoPage();
+}
+
+// note 모달 배경 클릭 닫기
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('note-modal')?.addEventListener('click', e => {
+    if(e.target.id === 'note-modal') closeNoteModal();
+  });
+});
+
+// ═══════════════════════════════════════════════
+// 공유 그룹 관리 (UNPO_SHARED)
+// ═══════════════════════════════════════════════
+
+// STATE.sharedGroups = [{ label, src:{ak,bn}, targets:[{ak,bn},...] }]
+// UNPO_SHARED (app.js 형식) = [{ak,bn,sharedWith:{ak,bn}}, ...] 로 평탄화
+
+function getSharedGroups() {
+  if(!STATE.sharedGroups) {
+    // 기존 STATE.shared (평탄화 형식)을 그룹 형식으로 변환
+    STATE.sharedGroups = [];
+    if(STATE.shared && STATE.shared.length) {
+      STATE.shared.forEach(s => {
+        const src = s.sharedWith;
+        if(!src) return;
+        const existing = STATE.sharedGroups.find(g =>
+          g.src.ak === src.ak && g.src.bn === src.bn
+        );
+        if(existing) {
+          if(!existing.targets.some(t => t.ak === s.ak && t.bn === s.bn))
+            existing.targets.push({ ak: s.ak, bn: s.bn });
+        } else {
+          STATE.sharedGroups.push({
+            label: s.label || '',
+            src: { ak: src.ak, bn: src.bn },
+            targets: [{ ak: s.ak, bn: s.bn }],
+          });
+        }
+      });
+    }
+  }
+  return STATE.sharedGroups;
+}
+
+function flattenSharedGroups() {
+  // sharedGroups → UNPO_SHARED 평탄화 (app.js 형식)
+  const flat = [];
+  (STATE.sharedGroups || []).forEach(g => {
+    g.targets.forEach(t => {
+      flat.push({ ak: t.ak, bn: t.bn, sharedWith: { ak: g.src.ak, bn: g.src.bn }, label: g.label || undefined });
+    });
+  });
+  STATE.shared = flat;
+  return flat;
+}
+
+function renderSharedGroups() {
+  const el = document.getElementById('shared-group-list');
+  if(!el) return;
+  const groups = getSharedGroups();
+  if(!groups.length) {
+    el.innerHTML = '<div class="empty" style="padding:12px">공유 그룹이 없습니다</div>';
+    return;
+  }
+  el.innerHTML = groups.map((g, i) => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--bd)">
+      <div class="flex" style="margin-bottom:6px">
+        ${g.label ? `<span class="tag" style="font-weight:600">${g.label}</span>` : ''}
+        <span class="badge badge-ok">원본: ${g.src.ak} › ${g.src.bn}</span>
+        <button class="btn btn-err btn-sm" style="margin-left:auto" onclick="removeSharedGroup(${i})">삭제</button>
+      </div>
+      <div class="flex" style="flex-wrap:wrap;gap:4px">
+        <span class="text-sm text-muted">공유됨:</span>
+        ${g.targets.map((t, ti) => `
+          <span class="badge badge-warn" style="cursor:pointer" onclick="removeSharedTarget(${i},${ti})" title="클릭하여 제거">
+            ${t.ak} › ${t.bn} ✕
+          </span>`).join('')}
+        <button class="btn btn-ghost btn-sm" onclick="addTargetToGroup(${i})">+ 대상 추가</button>
+      </div>
+    </div>`).join('');
+}
+
+function openSharedModal() {
+  getSharedGroups(); // 초기화
+  document.getElementById('sg-label').value = '';
+  sgRenderSrcStore();
+  sgRenderDstCandidates();
+  document.getElementById('shared-modal').classList.add('open');
+}
+
+function sgRenderSrcStore() {
+  const section = document.getElementById('sg-src-section').value;
+  const sel = document.getElementById('sg-src-store');
+  const stores = Object.keys(STATE.unpoData[section] || {});
+  sel.innerHTML = '<option value="">판매처 선택</option>' +
+    stores.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+function sgRenderDstCandidates() {
+  const section = document.getElementById('sg-dst-section').value;
+  const el = document.getElementById('sg-dst-list');
+  const stores = Object.keys(STATE.unpoData[section] || {});
+  if(!stores.length) { el.innerHTML = '<div class="text-muted text-sm">판매처 없음</div>'; return; }
+  el.innerHTML = stores.map(s => `
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 2px;font-size:13px">
+      <input type="checkbox" data-section="${section}" data-store="${s}" style="width:auto">
+      <span>${s}</span>
+    </label>`).join('');
+}
+
+function saveSharedGroup() {
+  const srcSection = document.getElementById('sg-src-section').value;
+  const srcStore   = document.getElementById('sg-src-store').value;
+  const label      = document.getElementById('sg-label').value.trim();
+
+  if(!srcStore) { alert('원본 판매처를 선택하세요'); return; }
+
+  // 체크된 대상들 수집
+  const checked = document.querySelectorAll('#sg-dst-list input[type=checkbox]:checked');
+  const targets = Array.from(checked).map(cb => ({
+    ak: cb.dataset.section,
+    bn: cb.dataset.store,
+  })).filter(t => !(t.ak === srcSection && t.bn === srcStore));
+
+  if(!targets.length) { alert('공유 대상을 1개 이상 선택하세요'); return; }
+
+  const groups = getSharedGroups();
+  // 같은 원본 그룹이 이미 있으면 병합, 없으면 새로 추가
+  const existing = groups.find(g => g.src.ak === srcSection && g.src.bn === srcStore);
+  if(existing) {
+    targets.forEach(t => {
+      if(!existing.targets.some(e => e.ak === t.ak && e.bn === t.bn))
+        existing.targets.push(t);
+    });
+    if(label) existing.label = label;
+  } else {
+    groups.push({ label, src: { ak: srcSection, bn: srcStore }, targets });
+  }
+
+  flattenSharedGroups();
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  closeModal('shared-modal');
+  renderSharedGroups();
+  renderDashboard();
+}
+
+function removeSharedGroup(i) {
+  if(!confirm('이 공유 그룹을 삭제하시겠습니까?')) return;
+  getSharedGroups().splice(i, 1);
+  flattenSharedGroups();
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  renderSharedGroups();
+  renderDashboard();
+}
+
+function removeSharedTarget(groupIdx, targetIdx) {
+  const groups = getSharedGroups();
+  groups[groupIdx].targets.splice(targetIdx, 1);
+  if(!groups[groupIdx].targets.length) groups.splice(groupIdx, 1);
+  flattenSharedGroups();
+  STATE.dirty = true;
+  STATE.pendingDataJs = true;
+  updateSaveBar();
+  renderSharedGroups();
+  renderDashboard();
+}
+
+function addTargetToGroup(groupIdx) {
+  const g = getSharedGroups()[groupIdx];
+  // 간단한 prompt UI
+  const section = prompt('섹션 입력 (INVENTORY/PHOTOBOOK/ID_PASS/POCAALBUM):');
+  if(!section) return;
+  const store = prompt('판매처명 입력:');
+  if(!store) return;
+  if(!g.targets.some(t => t.ak === section && t.bn === store)) {
+    g.targets.push({ ak: section, bn: store });
+    flattenSharedGroups();
+    STATE.dirty = true;
+    STATE.pendingDataJs = true;
+    updateSaveBar();
+    renderSharedGroups();
+  }
+}
+
+// renderSharedStoreOptions는 하위호환용 유지
+function renderSharedStoreOptions(selectId, section) {
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const stores = Object.keys(STATE.unpoData[section] || {});
+  sel.innerHTML = '<option value="">판매처 선택</option>' +
+    stores.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// UNPO IMAGE UPLOAD
+// ═══════════════════════════════════════════════
+function uploadUnpoImg(evt, section, storeName, setIdx, cardIdx) {
+  const file = evt.target.files[0];
+  if(!file) return;
+
+  const decodedName = decodeURIComponent(storeName);
+  const secDir = {INVENTORY:'inventory',PHOTOBOOK:'photobook',ID_PASS:'id_pass',POCAALBUM:'pocaalbum'}[section];
+  const storeKey = STORE_KEY_MAP[decodedName] || decodedName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+
+  // 실제 key 탐색
+  const sectionData = STATE.unpoData[section];
+  if(!sectionData) return;
+  const realKey = Object.keys(sectionData).find(k => k === decodedName);
+  if(!realKey) return;
+  const sets = sectionData[realKey];
+  if(!sets) return;
+  const s = sets[setIdx];
+  const cards = Array.isArray(s) ? s : (s.cards || []);
+  const multi = sets.length > 1;
+  const n = cards.length;
+  const members = n === 6 ? MEMBERS_6 : MEMBERS_5;
+  const member = members[cardIdx] || `card${cardIdx}`;
+  const setSuffix = multi ? `_set${setIdx+1}` : '';
+  const filename = `${storeKey}${setSuffix}_${member}.webp`;
+  const imagePath = `images/${secDir}/${filename}`;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+
+    // STATE 업데이트 (UI 즉시 반영)
+    if(cards[cardIdx]) cards[cardIdx].img = `./${imagePath}`;
+    STATE.dirty = true;
+
+    // 미리보기용 dataUrl 저장 (admin 내 로컬 표시용)
+    STATE.previewUrls[`./${imagePath}`] = dataUrl;
+
+    // 대기열에 추가 (저장 버튼 누를 때 일괄 push)
+    STATE.pendingImages[imagePath] = { dataUrl, filename, imagePath, section, storeName, setIdx, cardIdx };
+    STATE.pendingUnpoJs = true;
+    updateSaveBar();
+
+    renderUnpoPage();
+    renderDashboard();
+  };
+  reader.readAsDataURL(file);
+}
+
+// 판매처 → 파일키 매핑
+
+const STORE_KEY_MAP = {
+  '사운드웨이브':'soundwave','뮤직플랜트':'musicplant','위드뮤':'withmuu',
+  'VLAST SHOP':'vlastshop','TME':'tme','이즈위':'izwe','Universal JP':'universaljp',
+  'Weverse Shop':'weverse','Will Music':'willmusic','메이크스타':'makestar',
+  '영풍문고':'youngpoong','길보드':'ktown4u','WEVERSE JP':'weverseJP',
+  '더현대서울':'thehyundai','케타포':'ketapo','Youtube':'youtube',
+  '무신사':'musinsa','Hello82':'hello82','애니메이트':'animate',
+  'HMV':'hmv','올리브영':'oliveyoung','타워레코드':'towerrecords',
+};
+
+// ═══════════════════════════════════════════════
+// GITHUB API
+// ═══════════════════════════════════════════════
+function getGhConfig() {
+  return {
+    owner:  localStorage.getItem('gh_owner')  || '',
+    repo:   localStorage.getItem('gh_repo')   || '',
+    branch: localStorage.getItem('gh_branch') || 'main',
+    token:  localStorage.getItem('gh_token')  || '',
+  };
+}
+
+function saveGhConfig() {
+  localStorage.setItem('gh_owner',  document.getElementById('gh-owner').value.trim());
+  localStorage.setItem('gh_repo',   document.getElementById('gh-repo').value.trim());
+  localStorage.setItem('gh_branch', document.getElementById('gh-branch').value.trim() || 'main');
+  localStorage.setItem('gh_token',  document.getElementById('gh-token').value.trim());
+  updateGhStatusBadge();
+}
+
+function loadGhConfig() {
+  const cfg = getGhConfig();
+  document.getElementById('gh-owner').value  = cfg.owner;
+  document.getElementById('gh-repo').value   = cfg.repo;
+  document.getElementById('gh-branch').value = cfg.branch;
+  document.getElementById('gh-token').value  = cfg.token;
+  updateGhStatusBadge();
+}
+
+function updateGhStatusBadge() {
+  const cfg = getGhConfig();
+  const badge = document.getElementById('gh-status-badge');
+  if(!badge) return;
+  const connected = cfg.owner && cfg.repo && cfg.token;
+  badge.innerHTML = connected
+    ? `<span class="badge badge-ok">● GitHub 연동됨 — ${cfg.owner}/${cfg.repo}</span>`
+    : `<span class="badge badge-warn">● GitHub 미설정</span>`;
+}
+
+async function testGhConnection() {
+  const cfg = getGhConfig();
+  const el = document.getElementById('gh-test-result');
+  if(!cfg.owner || !cfg.repo || !cfg.token) {
+    el.innerHTML = '<span style="color:var(--err)">❌ owner, repo, token을 모두 입력하세요</span>';
+    return;
+  }
+  el.innerHTML = '테스트 중...';
+  try {
+    const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}`, 'GET');
+    if(res.ok) {
+      const data = await res.json();
+      el.innerHTML = `<span style="color:var(--ok)">✓ 연결 성공 — ${data.full_name} (${data.default_branch})</span>`;
+    } else {
+      const err = await res.json();
+      el.innerHTML = `<span style="color:var(--err)">❌ ${res.status}: ${err.message}</span>`;
+    }
+  } catch(e) {
+    el.innerHTML = `<span style="color:var(--err)">❌ 네트워크 오류: ${e.message}</span>`;
+  }
+}
+
+function ghFetch(endpoint, method, body) {
+  const cfg = getGhConfig();
+  return fetch(`https://api.github.com/${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${cfg.token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+async function getFileSha(path) {
+  const cfg = getGhConfig();
+  const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${cfg.branch}`, 'GET');
+  if(res.status === 404) return null;
+  const data = await res.json();
+  return data.sha || null;
+}
+
+async function ghPutFile(path, base64Content, message, sha) {
+  const cfg = getGhConfig();
+  const body = { message, content: base64Content, branch: cfg.branch };
+  if(sha) body.sha = sha;
+  const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}/contents/${path}`, 'PUT', body);
+  if(!res.ok) {
+    const err = await res.json();
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  return await res.json();
+}
+
+// updateSaveBar: 대기 중인 변경사항 바 업데이트
+function updateSaveBar() {
+  const bar = document.getElementById('save-bar');
+  const imgCount = Object.keys(STATE.pendingImages).length;
+  const hasChange = imgCount > 0 || STATE.pendingDataJs || STATE.pendingUnpoJs;
+  if(!hasChange) {
+    bar.classList.remove('visible');
+    return;
+  }
+  bar.classList.add('visible');
+  const details = [];
+  if(STATE.pendingDataJs) details.push('판매처·배급사');
+  if(STATE.pendingUnpoJs) details.push('미공포 구조');
+  if(imgCount > 0) details.push(`이미지 ${imgCount}장`);
+  document.getElementById('save-pending-count').textContent = details.length;
+  document.getElementById('save-bar-detail').textContent = `(${details.join(', ')} — index.html에 반영)`;
+}
+
+// discardPending: 대기 취소 (이미지는 되돌리기 어려우므로 페이지 새로고침)
+function discardPending() {
+  if(!confirm('변경사항을 취소하고 페이지를 새로고침 합니다. 업로드한 이미지는 사라집니다. 계속하시겠습니까?')) return;
+  STATE.pendingImages = {};
+  STATE.previewUrls = {};
+  STATE.pendingDataJs = false;
+  STATE.pendingUnpoJs = false;
+  STATE.dirty = false;
+  updateSaveBar();
+  init();
+}
+
+// saveAllToGitHub: 대기 중인 모든 변경사항을 한 번에 push
+async function saveAllToGitHub() {
+  const cfg = getGhConfig();
+  if(!cfg.owner || !cfg.repo || !cfg.token) {
+    alert('GitHub 연동 탭에서 설정을 완료하세요.');
+    showPage('github');
+    return;
+  }
+
+  const imgEntries = Object.values(STATE.pendingImages);
+  const hasAnyChange = imgEntries.length > 0 || STATE.pendingDataJs || STATE.pendingUnpoJs;
+  if(!hasAnyChange) { showToast('저장할 변경사항이 없습니다', 'info'); return; }
+
+  const btn = document.getElementById('save-btn');
+  const btnText = document.getElementById('save-btn-text');
+  btn.disabled = true;
+  btnText.textContent = '저장 중...';
+  addCommitLog(`⏳ push 시작 — 이미지 ${imgEntries.length}장 + index.html`, 'info');
+
+  let imgSuccess = 0, imgFailed = 0;
+  try {
+    // 1. 이미지 파일들 순차 push
+    for(let i = 0; i < imgEntries.length; i++) {
+      const { dataUrl, filename, imagePath } = imgEntries[i];
+      btnText.textContent = `이미지 저장 중 ${i+1}/${imgEntries.length}...`;
+      try {
+        const base64 = dataUrl.split(',')[1];
+        const sha = await getFileSha(imagePath);
+        await ghPutFile(imagePath, base64, `📸 미공포: ${filename}`, sha);
+        addCommitLog(`✓ ${imagePath}`, 'ok');
+        imgSuccess++;
+      } catch(e) {
+        addCommitLog(`❌ 실패: ${filename} — ${e.message}`, 'err');
+        imgFailed++;
+      }
+    }
+
+    // 2. index.html 데이터 블록 교체 push (항상 실행)
+    btnText.textContent = 'index.html 저장 중...';
+    await ghPushIndexHtml();
+
+    // 3. data.js / unpo.js 동기화 push
+    btnText.textContent = 'data.js / unpo.js 저장 중...';
+    await ghPushSideFiles();
+
+    // 완료
+    STATE.pendingImages = {};
+    STATE.pendingDataJs = false;
+    STATE.pendingUnpoJs = false;
+    STATE.dirty = false;
+    updateSaveBar();
+
+    const msg = imgFailed > 0
+      ? `완료 (이미지 ${imgSuccess}장 성공, ${imgFailed}장 실패) — index.html + data.js + unpo.js 반영 ~1분`
+      : `🎉 완료! — index.html + data.js + unpo.js push 완료 (~1분 후 반영)`;
+    addCommitLog(msg, imgFailed > 0 ? 'warn' : 'ok');
+    showToast(msg, imgFailed > 0 ? 'warn' : 'ok');
+
+  } catch(e) {
+    addCommitLog(`❌ 저장 오류: ${e.message}`, 'err');
+    showToast(`저장 실패: ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = '🚀 GitHub에 저장';
+  }
+}
+
+// (구) 개별 push 함수 - saveAllToGitHub로 대체됨, 하위 호환용
+async function ghPushUnpoImage() {}
+
+async function ghPushUnpoJs() {
+  await ghPushIndexHtml();
+}
+
+async function ghPushDataJs() {
+  // saveAllToGitHub에서 일괄 처리
+}
+
+// data.js / unpo.js를 GitHub에 push
+async function ghPushSideFiles() {
+  const cfg = getGhConfig();
+
+  // data.js 생성 및 push
+  try {
+    addCommitLog('⏳ js/data.js 업데이트 중...', 'info');
+    const dataContent = generateDataJs();
+    const dataEncoded = new TextEncoder().encode(dataContent);
+    let dataBinary = '';
+    dataEncoded.forEach(b => dataBinary += String.fromCharCode(b));
+    const dataBase64 = btoa(dataBinary);
+    const dataSha = await getFileSha('js/data.js');
+    await ghPutFile('js/data.js', dataBase64, `🔄 data.js 업데이트 (${new Date().toISOString().slice(0,10)})`, dataSha);
+    addCommitLog('✓ js/data.js push 완료', 'ok');
+  } catch(e) {
+    addCommitLog(`⚠️ js/data.js push 실패: ${e.message}`, 'warn');
+  }
+
+  // unpo.js 생성 및 push
+  try {
+    addCommitLog('⏳ js/unpo.js 업데이트 중...', 'info');
+    const unpoContent = generateUnpoJs();
+    const unpoEncoded = new TextEncoder().encode(unpoContent);
+    let unpoBinary = '';
+    unpoEncoded.forEach(b => unpoBinary += String.fromCharCode(b));
+    const unpoBase64 = btoa(unpoBinary);
+    const unpoSha = await getFileSha('js/unpo.js');
+    await ghPutFile('js/unpo.js', unpoBase64, `🔄 unpo.js 업데이트 (${new Date().toISOString().slice(0,10)})`, unpoSha);
+    addCommitLog('✓ js/unpo.js push 완료', 'ok');
+  } catch(e) {
+    addCommitLog(`⚠️ js/unpo.js push 실패: ${e.message}`, 'warn');
+  }
+}
+
+// index.html의 인라인 데이터 블록을 교체해서 push
+async function ghPushIndexHtml() {
+  const cfg = getGhConfig();
+  addCommitLog('⏳ index.html 데이터 블록 교체 중...', 'info');
+
+  // 1. GitHub에서 현재 index.html 받기
+  const res = await ghFetch(`repos/${cfg.owner}/${cfg.repo}/contents/index.html?ref=${cfg.branch}`, 'GET');
+  if(!res.ok) throw new Error(`index.html 로드 실패: HTTP ${res.status}`);
+  const fileData = await res.json();
+  const sha = fileData.sha;
+
+  // UTF-8 안전 디코딩 (한국어 포함)
+  const raw = fileData.content.replace(/\n/g, '');
+  const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+  let html = new TextDecoder('utf-8').decode(bytes);
+
+  // 2. unpoData에서 previewUrl(dataUrl) 제거 — 경로만 남김
+  const cleanedUnpoData = cleanUnpoDataForExport(STATE.unpoData);
+
+  // 3. 각 데이터 블록 교체
+  const vars = [
+    ['DISTRIBUTORS',    JSON.stringify(STATE.distributors, null, 2)],
+    ['STORES',          JSON.stringify(STATE.stores, null, 2)],
+    ['UNPO_MULTI_SETS', JSON.stringify(STATE.multiSets || {}, null, 2)],
+    ['UNPO_SHARED',     JSON.stringify(STATE.shared || [], null, 2)],
+    ['UNPO_DATA',       JSON.stringify(cleanedUnpoData, null, 2)],
+  ];
+  for(const [name, value] of vars) {
+    const before = html;
+    html = replaceInlineVar(html, name, value);
+    if(html !== before) addCommitLog(`  ✓ ${name} 교체 완료`, 'ok');
+  }
+
+  // 날짜 주석 갱신
+  html = html.replace(
+    /\/\/ Last updated: \d{4}-\d{2}-\d{2}/,
+    `// Last updated: ${new Date().toISOString().slice(0,10)}`
+  );
+
+  // 4. UTF-8 안전 인코딩 후 push
+  const encoded = new TextEncoder().encode(html);
+  let binary = '';
+  encoded.forEach(b => binary += String.fromCharCode(b));
+  const base64 = btoa(binary);
+  await ghPutFile('index.html', base64, `🔄 admin 데이터 업데이트 (${new Date().toISOString().slice(0,10)})`, sha);
+  addCommitLog('✓ index.html 업데이트 push 완료', 'ok');
+  addCommitLog('🚀 GitHub Pages 배포 시작 (약 1분 소요)', 'info');
+}
+
+// index.html 안의 "var NAME = ...;" 블록을 새 값으로 교체
+// 정규식 대신 문자열 split 방식 — 더 안정적
+function replaceInlineVar(html, varName, newJsonValue) {
+  const startMarker = `var ${varName} = `;
+
+  const startIdx = html.indexOf(startMarker);
+  if(startIdx === -1) {
+    console.warn(`replaceInlineVar: "${varName}" 시작 마커를 찾지 못했습니다`);
+    addCommitLog(`⚠️ ${varName} 블록 교체 실패 — 수동 확인 필요`, 'warn');
+    return html;
+  }
+
+  // 값 부분이 배열([)인지 객체({)인지 판별해서 닫는 문자 결정
+  const valueStart = startIdx + startMarker.length;
+  const firstChar = html[valueStart];
+  const closeChar = firstChar === '[' ? ']' : '}';
+
+  // 닫는 괄호 + 세미콜론 위치 탐색 (중첩 고려)
+  let depth = 0;
+  let endIdx = -1;
+  for(let i = valueStart; i < html.length; i++) {
+    const ch = html[i];
+    if(ch === firstChar) depth++;
+    else if(ch === closeChar) {
+      depth--;
+      if(depth === 0) {
+        // ]; 또는 }; 위치
+        endIdx = i + 1; // closeChar 다음 (세미콜론 위치)
+        // 세미콜론 찾기
+        while(endIdx < html.length && html[endIdx] !== ';') endIdx++;
+        endIdx++; // 세미콜론 포함
+        break;
+      }
+    }
+  }
+
+  if(endIdx === -1) {
+    console.warn(`replaceInlineVar: "${varName}" 끝 위치를 찾지 못했습니다`);
+    addCommitLog(`⚠️ ${varName} 블록 끝 탐색 실패`, 'warn');
+    return html;
+  }
+
+  const before = html.slice(0, startIdx);
+  const after  = html.slice(endIdx);
+  return `${before}var ${varName} = ${newJsonValue};${after}`;
+}
+
+// unpoData에서 dataUrl 제거 (경로만 유지)
+function cleanUnpoDataForExport(data) {
+  const out = {};
+  Object.entries(data).forEach(([section, stores]) => {
+    out[section] = {};
+    Object.entries(stores).forEach(([storeName, sets]) => {
+      out[section][storeName] = sets.map(s => {
+        const isFlat = Array.isArray(s);
+        const cards = isFlat ? s : (s.cards || []);
+        const memo  = isFlat ? '' : (s.memo || '');
+        const cleanCards = cards.map(c => ({
+          ...c,
+          img: (c.img && c.img.startsWith('data:'))
+            ? (Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img)?.imagePath
+                ? `./${Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img).imagePath}`
+                : null)
+            : (c.img || null),
+        }));
+        return isFlat ? cleanCards : { cards: cleanCards, memo };
+      });
+    });
+  });
+  return out;
+}
+
+async function pushAllToGitHub() {
+  // data.js + unpo.js를 저장 바를 통해 일괄 push
+  STATE.pendingDataJs = true;
+  STATE.pendingUnpoJs = true;
+  updateSaveBar();
+  showToast('저장 버튼을 눌러 GitHub에 반영하세요', 'info');
+}
+
+function addCommitLog(msg, type='info') {
+  const log = document.getElementById('gh-commit-log');
+  if(!log) return;
+  const colors = {ok:'var(--ok)',err:'var(--err)',warn:'var(--warn)',info:'var(--tx2)'};
+  const time = new Date().toLocaleTimeString('ko-KR');
+  const entry = document.createElement('div');
+  entry.innerHTML = `<span style="color:var(--tx3)">${time}</span> <span style="color:${colors[type]||colors.info}">${msg}</span>`;
+  if(log.querySelector('.empty')) log.innerHTML = '';
+  log.insertBefore(entry, log.firstChild);
+  // GitHub 연동 탭으로 이동하지 않아도 보이도록 토스트
+  showToast(msg, type);
+}
+
+function showToast(msg, type='info') {
+  const colors = {ok:'var(--ok)',err:'var(--err)',warn:'var(--warn)',info:'var(--info)'};
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:8px;font-size:13px;
+    background:var(--sur2);border:1px solid var(--bd2);color:${colors[type]||colors.info};
+    max-width:340px;z-index:999;animation:fadeIn .2s;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT / DOWNLOAD
+// ═══════════════════════════════════════════════
+function generateDataJs() {
+  const d = STATE;
+  return `// Caligo Pt.2 - 판매처 · 배급사 데이터
+// Last updated: ${new Date().toISOString().slice(0,10)}
+
+var DISTRIBUTORS = ${JSON.stringify(d.distributors, null, 2)};
+
+var STORES = ${JSON.stringify(d.stores, null, 2)};
+
+var UNPO_MULTI_SETS = ${JSON.stringify(d.multiSets, null, 2)};
+
+var UNPO_SHARED = ${JSON.stringify(d.shared, null, 2)};
+`;
+}
+
+function generateUnpoJs() {
+  // unpoData에서 img가 dataUrl(base64)이면 경로로 대체, 경로면 그대로 유지
+  function cleanUnpoData(data) {
+    const out = {};
+    Object.entries(data).forEach(([section, stores]) => {
+      out[section] = {};
+      Object.entries(stores).forEach(([storeName, sets]) => {
+        out[section][storeName] = sets.map(s => {
+          const isFlat = Array.isArray(s);
+          const cards = isFlat ? s : (s.cards || []);
+          const memo  = isFlat ? '' : (s.memo || '');
+          const cleanCards = cards.map(c => ({
+            ...c,
+            // dataUrl이면 pendingImages에서 경로를 역으로 찾아 치환
+            img: (c.img && c.img.startsWith('data:'))
+              ? (Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img)?.imagePath
+                  ? `./${Object.values(STATE.pendingImages).find(p => p.dataUrl === c.img).imagePath}`
+                  : null)
+              : (c.img || null),
+          }));
+          return isFlat ? cleanCards : { cards: cleanCards, memo };
+        });
+      });
+    });
+    return out;
+  }
+
+  return `// Caligo Pt.2 - 미공포 메타데이터
+// Last updated: ${new Date().toISOString().slice(0,10)}
+
+var UNPO_DATA = ${JSON.stringify(cleanUnpoData(STATE.unpoData), null, 2)};
+`;
+}
+
+function downloadDataJs() {
+  download('data.js', generateDataJs());
+}
+
+function downloadUnpoJs() {
+  download('unpo.js', generateUnpoJs());
+}
+
+function download(filename, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type:'text/javascript'}));
+  a.download = filename;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if(n.getAttribute('onclick')?.includes(`'${id}'`)) n.classList.add('active');
+  });
+  if(id === 'stores')       renderStoresTable();
+  if(id === 'distributors') renderDistTable();
+  if(id === 'unpo')         { renderSharedGroups(); renderUnpoPage(); }
+  if(id === 'dashboard')    renderDashboard();
+  if(id === 'export')       renderExport();
+  if(id === 'github')       { loadGhConfig(); updateGhStatusBadge(); }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close modal on bg click
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => { if(e.target === bg) bg.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+// 비밀번호 없이 세션 유지된 경우에만 init 자동 실행
+if(sessionStorage.getItem('admin_unlocked') === '1') {
+  init();
+}
+// 아니면 비밀번호 입력 화면이 먼저 뜨고, checkPw() 통과 후 init() 실행
+</script>
+<!-- ── 공유 그룹 모달 ── -->
+<div class="modal-bg" id="shared-modal">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-head">
+      <h3>🔗 공유 그룹 설정</h3>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('shared-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-muted" style="margin-bottom:16px">
+        같은 미공포 이미지를 <b>여러 판매처</b>가 공유할 때 설정합니다.<br>
+        <b style="color:var(--ok)">원본</b> 판매처는 카운트에 포함, <b style="color:var(--warn)">공유됨</b> 판매처들은 카운트에서 제외됩니다.
+      </p>
+      <div class="form-row">
+        <div><label>그룹 이름</label>
+          <input id="sg-label" placeholder="예: ASTERUM 433-10 (십카페럭드)">
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div>
+          <label style="color:var(--ok)">✓ 원본 판매처 (카운트 포함)</label>
+          <select id="sg-src-section" onchange="sgRenderSrcStore()" style="margin-bottom:6px">
+            <option value="INVENTORY">INVENTORY</option>
+            <option value="PHOTOBOOK">PHOTOBOOK</option>
+            <option value="ID_PASS" selected>ID_PASS</option>
+            <option value="POCAALBUM">POCAALBUM</option>
+          </select>
+          <select id="sg-src-store" style="margin-bottom:4px"><option value="">판매처 선택</option></select>
+        </div>
+        <div>
+          <label style="color:var(--warn)">⊘ 공유 대상들 (카운트 제외)</label>
+          <select id="sg-dst-section" onchange="sgRenderDstCandidates()" style="margin-bottom:6px">
+            <option value="INVENTORY">INVENTORY</option>
+            <option value="PHOTOBOOK">PHOTOBOOK</option>
+            <option value="ID_PASS">ID_PASS</option>
+            <option value="POCAALBUM" selected>POCAALBUM</option>
+          </select>
+          <div id="sg-dst-list" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r-sm);padding:6px;background:var(--sur2)">
+            <div class="text-muted text-sm">섹션 선택 후 표시됩니다</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--tx3);margin-top:4px">
+        공유 대상은 체크박스로 여러 개 선택 가능합니다
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('shared-modal')">취소</button>
+      <button class="btn btn-p" onclick="saveSharedGroup()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 뒷면(note) 편집 모달 ── -->
+<div class="note-modal-bg" id="note-modal">
+  <div class="note-modal">
+    <h4>📝 뒷면 텍스트 편집</h4>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:8px" id="note-modal-label"></div>
+    <textarea id="note-modal-text" placeholder="뒷면에 표시할 텍스트 (예: 사인, 스탬프 등)"></textarea>
+    <div class="foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeNoteModal()">취소</button>
+      <button class="btn btn-p btn-sm" onclick="saveNote()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 저장 바 ── -->
+<div id="save-bar">
+  <div class="save-count">
+    <b id="save-pending-count">0</b>개 변경사항 미저장
+    <span id="save-bar-detail" style="color:var(--tx3);font-size:12px;margin-left:8px"></span>
+  </div>
+  <button class="btn btn-ghost btn-sm" onclick="discardPending()">되돌리기</button>
+  <button class="btn btn-p" id="save-btn" onclick="saveAllToGitHub()">
+    <span id="save-btn-text">🚀 GitHub에 저장</span>
+  </button>
+</div>
+
+</body>
+</html>
