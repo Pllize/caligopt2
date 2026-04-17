@@ -2784,10 +2784,19 @@ function _doSave(){
       });
     }
     const toSave={...S,adminUnlocked:false,unpoData:unpoStripped};
-    localStorage.setItem('plave2_v2',JSON.stringify(toSave));
+    const serialized=JSON.stringify(toSave);
+    try{
+      localStorage.setItem('plave2_v2',serialized);
+    }catch(quota){
+      // QuotaExceededError: purchases만 저장 (최소 보존)
+      try{
+        localStorage.setItem('plave2_v2',JSON.stringify({purchases:S.purchases,theme:S.theme,stores:S.stores,distributors:S.distributors,countryPrices:S.countryPrices}));
+        console.warn('Storage quota exceeded - saved minimal data');
+      }catch(e2){console.error('Storage failed completely',e2);}
+    }
     // Save user-uploaded images separately (only changed ones)
     _saveUnpoImages();
-  }catch(e){}
+  }catch(e){console.error('Save error',e);}
 }
 function _saveUnpoImages(){
   try{
@@ -3040,7 +3049,13 @@ function go(tab){
 }
 function render(){
   const map={dash:renderDash,purch:renderPurch,cal:renderCal,mgr:renderMgr,info:renderInfo};
-  (map[S.tab]||renderDash)();
+  try{
+    (map[S.tab]||renderDash)();
+  }catch(err){
+    console.error('render error:',err);
+    const mc=document.getElementById('main');
+    if(mc) mc.innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><div style="color:var(--err);font-weight:700;margin-bottom:8px">렌더링 오류</div><div style="font-size:12px;color:var(--tx2);word-break:break-all">${err.message}</div><button class="btn btn-p" style="margin-top:12px" onclick="S.tab='dash';render()">대시보드로 돌아가기</button></div>`;
+  }
   // FAB: show + add button only on purch tab
   const fabAdd=document.getElementById('fab-add');
   if(fabAdd) fabAdd.style.display=S.tab==='purch'?'flex':'none';
@@ -3390,10 +3405,7 @@ function showAlbumDetail(albumKey){
   }).join('');
   const total=rows.reduce((s,p)=>{const it=p.items.find(i=>i.type===albumKey);return s+(it?.qty||0);},0);
   openM(`${a?.lb} — 총 ${total}장`,html);
-  document.getElementById('m-foot').innerHTML=`
-    ${s.url?`<a href="${s.url}" target="_blank" class="btn btn-p">🔗 구매 링크</a>`:''}
-    <button class="btn btn-s" onclick="closeM();addP('${s.id}')">+ 구매추가</button>
-    <button class="btn btn-s" onclick="closeM()">닫기</button>`;
+  document.getElementById('m-foot').innerHTML=`<button class="btn btn-s" onclick="closeM()">닫기</button>`;
 }
 
 function toggleStoreDet(sid){
