@@ -5,25 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>PLAVE Caligo Pt.2</title>
 <script>
-// Service Worker for offline caching
+// Service Worker - Network First (항상 최신 버전 우선)
 if('serviceWorker' in navigator && location.protocol !== 'file:'){
   const sw = `
+const CACHE='plave2-v3';
 self.addEventListener('install',e=>{
-  e.waitUntil(caches.open('plave2-v2').then(c=>c.addAll([location.href||'/'])));
   self.skipWaiting();
 });
 self.addEventListener('activate',e=>e.waitUntil(
-  caches.keys().then(ks=>Promise.all(ks.filter(k=>k!=='plave2-v2').map(k=>caches.delete(k))))
+  caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k))))
+  .then(()=>self.clients.claim())
 ));
 self.addEventListener('fetch',e=>{
-  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{
-    const rc=res.clone();
-    caches.open('plave2-v2').then(c=>c.put(e.request,rc));
-    return res;
-  })));
+  if(e.request.mode==='navigate'){
+    // HTML만 캐싱: 네트워크 우선, 오프라인 시 캐시 fallback
+    e.respondWith(
+      fetch(e.request).then(res=>{
+        const rc=res.clone();
+        caches.open(CACHE).then(c=>c.put(e.request,rc));
+        return res;
+      }).catch(()=>caches.match(e.request))
+    );
+  }
+  // 이미지·폰트·API 등 나머지는 캐싱 없이 그냥 통과
+});
+self.addEventListener('message',e=>{
+  if(e.data==='skipWaiting') self.skipWaiting();
 });`;
   const blob=new Blob([sw],{type:'text/javascript'});
-  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).then(reg=>{
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller){
+          nw.postMessage('skipWaiting');
+        }
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      window.location.reload();
+    });
+  }).catch(()=>{});
 }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
