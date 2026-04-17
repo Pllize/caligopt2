@@ -1,5 +1,5 @@
 // Caligo Pt.2 - 판매처 · 배급사 데이터
-// Last updated: 2026-04-14
+// Last updated: 2026-04-17
 
 var DISTRIBUTORS = [
   {
@@ -97,6 +97,10 @@ var DISTRIBUTORS = [
   {
     "id": "dcs1776085087300",
     "name": "Youtube"
+  },
+  {
+    "name": "버프즈",
+    "id": "dcs1776402077701"
   }
 ];
 
@@ -1164,6 +1168,33 @@ var STORES = [
     "memo": "영통발표: 4/21 ; 드라이빙토크회: 5/31",
     "custom": true,
     "id": "cs1776171151326"
+  },
+  {
+    "name": "버프즈",
+    "distId": "dcs1774619302089",
+    "country": "KR",
+    "unpoPerk": "INVENTORY",
+    "unpoSets": 1,
+    "unpoBack": false,
+    "priceMode": "country",
+    "customPrices": null,
+    "purchaseStart": "2026-04-17T11:00",
+    "purchaseEnd": "2026-04-19T23:59",
+    "purchaseEndTxt": "",
+    "defDeliveryDate": "",
+    "offlineStart": "",
+    "offlineEnd": "",
+    "offlineHours": "",
+    "offlineAddress": "",
+    "offlineNote": "",
+    "offlineLuckyDraw": false,
+    "defDomShip": 0,
+    "defOvsShip": 0,
+    "url": "https://buffz.co.kr/article/event/8/168196/categoryno/1/",
+    "videocall": true,
+    "memo": "",
+    "custom": true,
+    "id": "cs1776402107838"
   }
 ];
 
