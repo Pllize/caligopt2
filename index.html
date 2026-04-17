@@ -507,7 +507,7 @@ td{padding:8px 10px;border-bottom:1px solid var(--bd);font-size:13px;vertical-al
 <script>
 // Caligo Pt.2 - 판매처 · 배급사 데이터
 // 자동 생성 - 수동 편집하거나 admin.html에서 관리하세요
-// Last updated: 2026-04-15
+// Last updated: 2026-04-17
 
 var DISTRIBUTORS = [
   {
@@ -607,38 +607,36 @@ var DISTRIBUTORS = [
     "name": "Youtube"
   },
   {
-    "name": "ASTERUM 433-10",
-    "id": "dcs1776280497538"
+    "name": "버프즈",
+    "id": "dcs1776399761734"
   }
 ];
 
 var STORES = [
   {
-    "name": "길보드",
+    "name": "길보드 (ASTERUM 433-10)",
     "distId": "",
     "country": "KR",
-    "unpoPerk": "ID_PASS",
-    "unpoSets": 1,
-    "unpoBack": false,
+    "unpoPerk": "POCAALBUM",
     "priceMode": "country",
-    "customPrices": null,
+    "customPrices": {},
     "purchaseStart": "2026-04-20T15:00",
     "purchaseEnd": "2026-04-20T23:00",
     "purchaseEndTxt": "",
-    "defDeliveryDate": "",
     "offlineStart": "2026-04-20",
     "offlineEnd": "2026-04-20",
-    "offlineHours": "15:00 - 23:00",
-    "offlineAddress": "서대문구 연희로11가길 48-23",
-    "offlineNote": "모든 버전 구매시 Youtube 럭드와 동일한 포카 중 랜덤 1종 증정\n럭드 포토카드중 친필사인 포토카드 랜덤 제공",
-    "offlineLuckyDraw": true,
+    "offlineNote": "모든 버전 구매시 A2T DRAW (십카페 럭드) 와 동일한 포카 중 랜덤 1종 증정\n럭드 포토카드중 친필사인 포토카드 랜덤 제공",
     "defDomShip": 0,
     "defOvsShip": 0,
     "url": "https://caligopt2popup.oopy.io/32d4cacd-15c9-80d4-91e3-e505275bb65c",
-    "videocall": false,
-    "memo": "",
     "custom": true,
-    "id": "cs1774546479074"
+    "id": "cs1774546479074",
+    "defDeliveryDate": "",
+    "offlineHours": "15:00 - 23:00",
+    "offlineAddress": "서대문구 연희로11가길 48-23",
+    "offlineLuckyDraw": true,
+    "videocall": false,
+    "memo": ""
   },
   {
     "name": "더현대서울",
@@ -1680,16 +1678,16 @@ var STORES = [
     "id": "cs1776171151326"
   },
   {
-    "name": "ASTERUM 433-10",
-    "distId": "dcs1776280497538",
+    "name": "버프즈",
+    "distId": "dcs1776399761734",
     "country": "KR",
-    "unpoPerk": "POCAALBUM",
+    "unpoPerk": "PHOTOBOOK",
     "unpoSets": 1,
-    "unpoBack": false,
+    "unpoBack": true,
     "priceMode": "country",
     "customPrices": null,
-    "purchaseStart": "2026-04-14T10:30",
-    "purchaseEnd": "",
+    "purchaseStart": "2026-04-17T11:00",
+    "purchaseEnd": "2026-04-19T23:59",
     "purchaseEndTxt": "",
     "defDeliveryDate": "",
     "offlineStart": "",
@@ -1700,11 +1698,11 @@ var STORES = [
     "offlineLuckyDraw": false,
     "defDomShip": 0,
     "defOvsShip": 0,
-    "url": "",
-    "videocall": false,
-    "memo": "",
+    "url": "https://buffz.co.kr/article/event/8/168196/categoryno/1/",
+    "videocall": true,
+    "memo": "발표 4/20 14시; 영통 5/30",
     "custom": true,
-    "id": "cs1776280525802"
+    "id": "cs1776399896124"
   }
 ];
 
@@ -1794,10 +1792,10 @@ var SCHEDULE = [
 var UNPO_SHARED = [
   {
     "ak": "POCAALBUM",
-    "bn": "Youtube",
+    "bn": "길보드",
     "sharedWith": {
-      "ak": "POCAALBUM",
-      "bn": "길보드"
+      "ak": "ID_PASS",
+      "bn": "무신사"
     }
   }
 ];
@@ -1933,27 +1931,27 @@ var UNPO_DATA = {
       {
         "cards": [
           {
-            "img": null,
+            "img": "./images/photobook/vlastshop_set2_yejun.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/photobook/vlastshop_set2_noa.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/photobook/vlastshop_set2_bambi.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/photobook/vlastshop_set2_eunho.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/photobook/vlastshop_set2_hamin.webp",
             "note": "",
             "owned": false
           }
@@ -2077,6 +2075,43 @@ var UNPO_DATA = {
           "owned": false
         }
       ]
+    ],
+    "버프즈": [
+      {
+        "cards": [
+          {
+            "img": "./images/photobook/____yejun.webp",
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": "./images/photobook/____noa.webp",
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": "./images/photobook/____bambi.webp",
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": "./images/photobook/____eunho.webp",
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": "./images/photobook/____hamin.webp",
+            "note": "",
+            "owned": false
+          },
+          {
+            "img": null,
+            "note": "",
+            "owned": false
+          }
+        ],
+        "memo": ""
+      }
     ]
   },
   "ID_PASS": {
@@ -2341,38 +2376,6 @@ var UNPO_DATA = {
           "owned": false
         }
       ]
-    ],
-    "길보드": [
-      {
-        "cards": [
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          }
-        ],
-        "memo": ""
-      }
     ]
   },
   "POCAALBUM": {
@@ -2506,32 +2509,32 @@ var UNPO_DATA = {
       {
         "cards": [
           {
-            "img": null,
+            "img": "./images/pocaalbum/ktown4u_yejun.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/ktown4u_noa.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/ktown4u_bambi.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/ktown4u_eunho.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/ktown4u_hamin.webp",
             "note": "",
             "owned": false
           }
         ],
-        "memo": "유튜브럭드와 동일"
+        "memo": "ASTERUM 433-10 (십카페럭드), 무신사 세트2와 동일"
       }
     ],
     "WEVERSE JP": [
@@ -2567,27 +2570,27 @@ var UNPO_DATA = {
       {
         "cards": [
           {
-            "img": null,
+            "img": "./images/pocaalbum/thehyundai_yejun.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/thehyundai_noa.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/thehyundai_bambi.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/thehyundai_eunho.webp",
             "note": "",
             "owned": false
           },
           {
-            "img": null,
+            "img": "./images/pocaalbum/thehyundai_hamin.webp",
             "note": "",
             "owned": false
           }
@@ -2696,39 +2699,7 @@ var UNPO_DATA = {
             "owned": false
           }
         ],
-        "memo": "길보드 럭드와 동일"
-      }
-    ],
-    "ASTERUM 433-10": [
-      {
-        "cards": [
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          },
-          {
-            "img": null,
-            "note": "",
-            "owned": false
-          }
-        ],
-        "memo": "무신사 2번세트와 동일"
+        "memo": ""
       }
     ]
   }
