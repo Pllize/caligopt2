@@ -2930,15 +2930,15 @@ function load(){
 // ═══════════════════════════════════════════
 function rate(cur){if(cur==='KRW')return 1;return S.rates[cur]?.rate||DEF_RATES[cur]||1;}
 function toKRW(amt,cur){return Math.round(amt*rate(cur));}
-function getStoreCur(store){return COUNTRIES[store.country]?.cur||'KRW';}
-function isOvs(store){return COUNTRIES[store.country]?.ovs||false;}
+function getStoreCur(store){return COUNTRIES[store?.country]?.cur||'KRW';}
+function isOvs(store){return COUNTRIES[store?.country]?.ovs||false;}
 function storePrice(store,albumKey){
   if(store.priceMode==='nosale') return null;
   if(store.priceMode==='custom'){
     if(store.customPrices&&albumKey in store.customPrices) return store.customPrices[albumKey]; // null = 미판매
     return null; // not in customPrices = also 미판매 for custom mode
   }
-  return S.countryPrices[store.country]?.[albumKey]??null;
+  return S.countryPrices[store?.country]?.[albumKey]??null;
 }
 function calcTotal(p){
   const store=S.stores.find(s=>s.id===p.storeId);
@@ -2998,7 +2998,7 @@ function platName(distId){return distName(distId);} // alias
 function storeFull(store){
   if(!store)return '?';
   const dist=distName(store.distId);
-  const ctry=COUNTRIES[store.country]?.lb||store.country;
+  const ctry=COUNTRIES[store?.country]?.lb||store?.country||'?';
   const lines=[store.name];
   if(dist)lines.push(dist+' · '+ctry);
   else lines.push(ctry);
@@ -3526,7 +3526,7 @@ function renderPurch(){
 function pCard(p,hz){
   const store=S.stores.find(s=>s.id===p.storeId);if(!store)return '';
   const t=calcTotal(p);const pt=calcProxyTotal(p);const ovs=isOvs(store);const cur=getStoreCur(store);
-  const dist=distName(store.distId);const ctry=COUNTRIES[store.country]?.lb||store.country;
+  const dist=distName(store?.distId);const ctry=COUNTRIES[store?.country]?.lb||store?.country||'?';
   let items=p.items||[];if(hz)items=items.filter(i=>i.qty>0);
   const totalQty=items.filter(i=>i.qty>0).reduce((s,i)=>s+(i.qty||0),0);
   const proxyQtyTotal=items.filter(i=>i.qty>0).reduce((s,i)=>s+(i.proxyQty||0),0);
